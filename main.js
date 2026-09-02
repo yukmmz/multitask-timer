@@ -56,6 +56,15 @@ function elapsedOf(task) {
   return ms > 0 ? ms : 0;
 }
 
+/** Minutes of every target that is set, or 0 when no task has one. */
+function totalTargetMin() {
+  var sum = 0;
+  for (var i = 0; i < state.tasks.length; i++) {
+    if (state.tasks[i].targetMin !== null) sum += state.tasks[i].targetMin;
+  }
+  return sum;
+}
+
 function totalElapsed() {
   var sum = 0;
   for (var i = 0; i < state.tasks.length; i++) sum += elapsedOf(state.tasks[i]);
@@ -248,38 +257,153 @@ function formatTargetLabel(min) {
 
 /* ------------------------------------------------------------------- audio */
 
-var audioCtx = null;
+/* The alert is a WAV built at runtime and played through an <audio> element.
+ *
+ * Not the Web Audio API: iOS suspends an AudioContext when the page is hidden,
+ * the screen locks, or another app plays audio, and an overrun fires without a
+ * user gesture that could resume it — so only the first alert was ever audible.
+ * iOS also treats Web Audio as ambient sound and silences it in silent mode.
+ * A media element unlocked once by a gesture does not have either problem.
+ *
+ * iOS still refuses to play an element that was never started inside a gesture,
+ * so `unlockAudio()` starts and stops the clip on the first tap. The clip opens
+ * with LEAD_MS of silence so that unlocking play is inaudible.
+ */
 
-/** iOS blocks audio until a user gesture, so unlock on the first interaction. */
-function unlockAudio() {
-  if (!audioCtx) {
-    var Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    try { audioCtx = new Ctx(); } catch (e) { audioCtx = null; return; }
+var SAMPLE_RATE = 22050;
+var LEAD_MS = 150;      // head silence: the unlocking play stays inside it
+var TONE_MS = 220;
+var GAP_MS = 90;
+var TONE_HZ = 880;
+var TONE_COUNT = 3;
+var TONE_GAIN = 0.35;
+
+var beepAudio = null;
+var audioUnlocked = false;
+
+/** The alert as samples in [-1, 1]: silence, then three enveloped tones. */
+function beepSamples(rate) {
+  var lead = Math.round(rate * LEAD_MS / 1000);
+  var tone = Math.round(rate * TONE_MS / 1000);
+  var gap = Math.round(rate * GAP_MS / 1000);
+  var fade = Math.round(rate * 0.008);   // 8 ms in and out, to kill the click
+  var out = [];
+  var i, j, env;
+
+  for (i = 0; i < lead; i++) out.push(0);
+  for (j = 0; j < TONE_COUNT; j++) {
+    if (j > 0) for (i = 0; i < gap; i++) out.push(0);
+    for (i = 0; i < tone; i++) {
+      env = 1;
+      if (i < fade) env = i / fade;
+      else if (i > tone - fade) env = (tone - i) / fade;
+      out.push(Math.sin(2 * Math.PI * TONE_HZ * i / rate) * TONE_GAIN * env);
+    }
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(function () { /* ignore */ });
+  return out;
+}
+
+/** Wrap samples in a 16-bit mono WAV and return it as a data: URI. */
+function wavDataUri(samples, rate) {
+  var bytes = [];
+  function str(s) { for (var k = 0; k < s.length; k++) bytes.push(s.charCodeAt(k) & 0xff); }
+  function u32(v) { bytes.push(v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >> 24) & 255); }
+  function u16(v) { bytes.push(v & 255, (v >> 8) & 255); }
+
+  var n = samples.length;
+  str('RIFF'); u32(36 + n * 2); str('WAVE');
+  str('fmt '); u32(16); u16(1); u16(1); u32(rate); u32(rate * 2); u16(2); u16(16);
+  str('data'); u32(n * 2);
+  for (var i = 0; i < n; i++) {
+    var v = Math.round(Math.max(-1, Math.min(1, samples[i])) * 32767);
+    if (v < 0) v += 0x10000;
+    bytes.push(v & 255, (v >> 8) & 255);
+  }
+
+  var chars = '';
+  for (var p = 0; p < bytes.length; p += 0x8000) {
+    chars += String.fromCharCode.apply(null, bytes.slice(p, p + 0x8000));
+  }
+  return 'data:audio/wav;base64,' + window.btoa(chars);
+}
+
+/** Build the clip once. */
+function ensureBeepAudio() {
+  if (beepAudio || !window.Audio || !window.btoa) return;
+  try {
+    beepAudio = new window.Audio(wavDataUri(beepSamples(SAMPLE_RATE), SAMPLE_RATE));
+    beepAudio.preload = 'auto';
+  } catch (e) {
+    beepAudio = null;
   }
 }
 
-/** Three short beeps. Silent if audio was never unlocked by a gesture. */
-function beep() {
-  if (!audioCtx || audioCtx.state !== 'running') return;
-  var t0 = audioCtx.currentTime;
-  for (var i = 0; i < 3; i++) {
-    var start = t0 + i * 0.28;
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, start);
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.3, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(start);
-    osc.stop(start + 0.26);
+/** On a user gesture, start and stop the clip so later plays are permitted. */
+function unlockAudio() {
+  ensureBeepAudio();
+  if (!beepAudio || audioUnlocked) return;
+  try {
+    var promise = beepAudio.play();
+    var stop = function () {
+      beepAudio.pause();
+      try { beepAudio.currentTime = 0; } catch (e) { /* ignore */ }
+      audioUnlocked = true;
+    };
+    if (promise && typeof promise.then === 'function') {
+      promise.then(stop, function () { /* refused: the next gesture retries */ });
+    } else {
+      stop();
+    }
+  } catch (e) {
+    /* Refused: the next gesture retries. */
   }
+}
+
+/** Three short beeps. Silent until a gesture has unlocked playback. */
+function beep() {
+  if (!beepAudio) return;
+  try {
+    beepAudio.currentTime = 0;
+    var promise = beepAudio.play();
+    if (promise && typeof promise['catch'] === 'function') {
+      promise['catch'](function () { /* ignore */ });
+    }
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/* The settings sheet's sound test. The press unlocks playback, then the beep
+ * fires from a timer a few seconds later — exactly how a real overrun alert
+ * reaches `beep()`. Beeping during the press instead would pass even when the
+ * real alert is silent, which is the failure this test exists to catch. */
+
+var TEST_DELAY_S = 3;
+var soundTestTimer = null;
+
+function runSoundTest() {
+  if (soundTestTimer !== null) return;
+  unlockAudio();
+
+  var left = TEST_DELAY_S;
+  els.testSound.disabled = true;
+  els.testSound.textContent = left + ' 秒後に鳴らします…';
+
+  soundTestTimer = window.setInterval(function () {
+    left--;
+    if (left > 0) {
+      els.testSound.textContent = left + ' 秒後に鳴らします…';
+      return;
+    }
+    window.clearInterval(soundTestTimer);
+    soundTestTimer = null;
+    beep();
+    els.testSound.disabled = false;
+    els.testSound.textContent = '鳴りましたか？';
+    window.setTimeout(function () {
+      if (soundTestTimer === null) els.testSound.textContent = '音をテスト';
+    }, 5000);
+  }, 1000);
 }
 
 /* -------------------------------------------------------------------- DOM */
@@ -506,6 +630,14 @@ function render() {
   }
 
   els.totalTime.textContent = formatDuration(totalElapsed());
+
+  var targetSum = totalTargetMin();
+  var targetSumText = targetSum > 0 ? '目安合計 ' + formatTargetLabel(targetSum) : '';
+  if (targetSumText !== lastTargetTotal) {
+    els.targetTotal.textContent = targetSumText;
+    lastTargetTotal = targetSumText;
+  }
+
   els.stopAll.disabled = !running;
   els.taskCountValue.textContent = String(state.tasks.length);
   els.taskMinus.disabled = state.tasks.length <= MIN_TASKS;
@@ -515,6 +647,7 @@ function render() {
 }
 
 var lastTitle = '';
+var lastTargetTotal = '';
 
 function updateTitle(running) {
   var title = 'Multitask Timer';
@@ -563,9 +696,11 @@ function init() {
   els.taskPlus = document.getElementById('task-plus');
   els.taskMinus = document.getElementById('task-minus');
   els.taskCountValue = document.getElementById('task-count-value');
+  els.targetTotal = document.getElementById('target-total');
   els.settingsBtn = document.getElementById('settings-btn');
   els.settingsPanel = document.getElementById('settings-panel');
   els.settingsClose = document.getElementById('settings-close');
+  els.testSound = document.getElementById('test-sound');
   els.backdrop = document.getElementById('sheet-backdrop');
 
   state = load();
@@ -585,6 +720,7 @@ function init() {
   });
 
   els.settingsClose.addEventListener('click', function () { setSettingsOpen(false); });
+  els.testSound.addEventListener('click', runSoundTest);
   els.backdrop.addEventListener('click', closeOverlays);
 
   els.resetAll.addEventListener('click', function () {

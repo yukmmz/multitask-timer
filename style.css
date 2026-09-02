@@ -400,6 +400,26 @@ main {
   border-color: var(--accent);
 }
 
+
+/* ---------- footer ---------- */
+
+/* Sum of every target time that is set. Deliberately as quiet as the per-card
+   target line: it is a reference figure, not something to watch. */
+.app-footer {
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 2px 0 4px;
+}
+
+.target-total {
+  display: block;
+  min-height: 1.2em;
+  font-size: .78rem;
+  font-weight: 300;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- settings sheet ---------- */
 
 .backdrop {

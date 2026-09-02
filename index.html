@@ -28,6 +28,10 @@
   <div id="tasks" class="tasks"></div>
 </main>
 
+<footer class="app-footer">
+  <span id="target-total" class="target-total"></span>
+</footer>
+
 <!-- Global settings: task count, reset-all, and the usage notes. -->
 <div id="sheet-backdrop" class="backdrop" hidden></div>
 
@@ -47,6 +51,11 @@
   </div>
 
   <div class="sheet-row">
+    <span class="sheet-label">通知音</span>
+    <button id="test-sound" class="btn" type="button">音をテスト</button>
+  </div>
+
+  <div class="sheet-row">
     <span class="sheet-label">計測時間</span>
     <button id="reset-all" class="btn btn-danger" type="button">すべて 00:00:00 に戻す</button>
   </div>
@@ -58,7 +67,12 @@
     <p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。
        設定ウィンドウは外側をタップすると閉じます。</p>
     <p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。
-       （音は最初に画面をどこか一度タップしてから有効になります。iPad はサイレントスイッチにも注意）</p>
+       音は最初に画面をどこか一度タップしてから有効になります。</p>
+    <p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後にビープが鳴ります。
+       ここで鳴れば、目安時間の超過通知も同じように鳴ります。</p>
+    <p><strong>iPad / iPhone で音が鳴らないとき</strong>は、
+       <strong>設定 → サウンド → 消音モード を OFF</strong> にしてください
+       （音量を上げただけでは鳴らないことがあります）。</p>
     <p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>Esc</kbd> 閉じる</p>
     <p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>
   </div>

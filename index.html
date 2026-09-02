@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="複数タスクを並行で進めるときに、どのタスクに何分使ったかを計測する排他ストップウォッチ。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>マルチタスクタイマー</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1 class="app-title">マルチタスクタイマー</h1>
+  <div class="total">
+    <span class="total-label">合計</span>
+    <span id="total-time" class="total-time">00:00:00</span>
+  </div>
+  <button id="stop-all" class="btn btn-stop" type="button">■ 全停止</button>
+  <button id="settings-btn" class="btn btn-icon" type="button"
+          title="設定" aria-label="設定" aria-expanded="false">⚙</button>
+</header>
+
+<main>
+  <div id="tasks" class="tasks"></div>
+</main>
+
+<!-- Global settings: task count, reset-all, and the usage notes. -->
+<div id="sheet-backdrop" class="backdrop" hidden></div>
+
+<section id="settings-panel" class="sheet" hidden aria-label="設定">
+  <div class="sheet-head">
+    <h2 class="sheet-title">設定</h2>
+    <button id="settings-close" class="btn btn-icon" type="button" aria-label="閉じる">✕</button>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label">タスク数</span>
+    <div class="stepper" role="group" aria-label="タスク数">
+      <button id="task-minus" class="btn btn-round" type="button" aria-label="タスクを減らす">−</button>
+      <span id="task-count-value" class="stepper-value" aria-live="polite">3</span>
+      <button id="task-plus" class="btn btn-round" type="button" aria-label="タスクを増やす">＋</button>
+    </div>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label">計測時間</span>
+    <button id="reset-all" class="btn btn-danger" type="button">すべて 00:00:00 に戻す</button>
+  </div>
+
+  <div class="sheet-help">
+    <p><strong>使い方</strong></p>
+    <p>タスクの枠を押すと、そのタスクだけがカウントアップし、走っていた他のタスクは自動で停止します。
+       走っているタスクをもう一度押すと停止します。</p>
+    <p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。
+       設定ウィンドウは外側をタップすると閉じます。</p>
+    <p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。
+       （音は最初に画面をどこか一度タップしてから有効になります。iPad はサイレントスイッチにも注意）</p>
+    <p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>Esc</kbd> 閉じる</p>
+    <p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>
+  </div>
+</section>
+
+<template id="task-template">
+  <section class="card" tabindex="0">
+    <!-- .card-body is the size container: the text inside scales with the card's
+         own width (cqi), not the viewport. The menu stays outside it, because a
+         size container is also a containing block for position:fixed children. -->
+    <div class="card-body">
+      <div class="card-top">
+        <span class="task-name-text">タスク</span>
+        <button class="btn btn-icon task-menu-btn" type="button"
+                title="このタスクの設定" aria-label="このタスクの設定" aria-expanded="false">⋯</button>
+      </div>
+
+      <div class="time-wrap">
+        <div class="task-time">00:00:00</div>
+        <div class="task-target-view"></div>
+        <div class="task-over"></div>
+      </div>
+    </div>
+
+    <div class="task-menu" hidden>
+      <label class="menu-field">
+        <span class="menu-label">タスク名</span>
+        <input class="task-name" type="text" maxlength="24" placeholder="タスク名" aria-label="タスク名">
+      </label>
+
+      <div class="menu-field">
+        <span class="menu-label">目安時間</span>
+        <span class="menu-target">
+          <input class="task-target-h" type="number" min="0" max="24" step="1"
+                 inputmode="numeric" placeholder="0" aria-label="目安時間（時間）">
+          <span class="menu-unit">時間</span>
+          <input class="task-target-m" type="number" min="0" max="59" step="1"
+                 inputmode="numeric" placeholder="0" aria-label="目安時間（分）">
+          <span class="menu-unit">分</span>
+        </span>
+      </div>
+
+      <button class="btn btn-danger task-reset" type="button">時間リセット</button>
+    </div>
+  </section>
+</template>
+
+<script src="main.js"></script>
+</body>
+</html>

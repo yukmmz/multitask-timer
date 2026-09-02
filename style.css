@@ -1,0 +1,496 @@
+/* multitask-timer — styles
+   Layout targets: desktop Chrome and iPad Safari (touch first, no hover dependency).
+   The whole card is the start/stop control, so nothing inside it may look tappable
+   except the per-task menu button. */
+
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --text: #1c1f24;
+  --muted: #6b7280;
+  --border: #e3e6ea;
+  --accent: #2563eb;
+  --danger: #dc2626;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 4px 12px rgba(16, 24, 40, .05);
+  --shadow-run: 0 6px 22px rgba(16, 24, 40, .16);
+  --radius: 16px;
+
+  /* Per-task tints: soft red / blue / yellow / green / purple / orange.
+     `--strong` is only used while the task is running. */
+  --t0-tint: #fff2f2;  --t0-edge: #f3bcbc;  --t0-strong: #e77b7b;
+  --t1-tint: #eff4ff;  --t1-edge: #bacff5;  --t1-strong: #7ba2ee;
+  --t2-tint: #fff9e8;  --t2-edge: #f0d99e;  --t2-strong: #d9a93f;
+  --t3-tint: #eefaf1;  --t3-edge: #b0dfbc;  --t3-strong: #6fc389;
+  --t4-tint: #f6f1ff;  --t4-edge: #cbbcf2;  --t4-strong: #9d81e6;
+  --t5-tint: #fff4ea;  --t5-edge: #f5c8a3;  --t5-strong: #ec9d5f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c;
+    --card: #1c2027;
+    --text: #e8eaed;
+    --muted: #9aa3ae;
+    --border: #2c323b;
+    --accent: #60a5fa;
+    --danger: #f87171;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 12px rgba(0, 0, 0, .25);
+    --shadow-run: 0 6px 22px rgba(0, 0, 0, .45);
+
+    --t0-tint: #2b1e20;  --t0-edge: #6d4247;  --t0-strong: #d97f7f;
+    --t1-tint: #1b2130;  --t1-edge: #3f5480;  --t1-strong: #7ba2ee;
+    --t2-tint: #2a2519;  --t2-edge: #6e5c34;  --t2-strong: #d9b45c;
+    --t3-tint: #1a2620;  --t3-edge: #3d6349;  --t3-strong: #66bd80;
+    --t4-tint: #241f31;  --t4-edge: #52447d;  --t4-strong: #9d81e6;
+    --t5-tint: #2b2119;  --t5-edge: #6f5136;  --t5-strong: #e09a63;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP",
+               "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 10px 14px 14px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Touch behaviour: no double-tap zoom, no text selection on repeated taps. */
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- header ---------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.total-label { font-size: .8rem; color: var(--muted); }
+
+.total-time {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background .12s ease, border-color .12s ease, transform .06s ease;
+}
+
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .4; cursor: default; }
+
+.btn-stop {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-stop:not(:disabled) {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.btn-ghost { color: var(--muted); font-size: .9rem; }
+
+.btn-danger {
+  color: var(--danger);
+  border-color: var(--border);
+  font-size: .9rem;
+}
+
+.btn-round {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The settings gear is the one control that must read at a glance. */
+#settings-btn {
+  font-size: 2.1rem;
+  line-height: 1;
+  overflow: visible;
+}
+
+/* ---------- task grid ---------- */
+
+main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;   /* the row of cards sits mid-height, not top-aligned */
+  padding: 14px 0;
+}
+
+/* Cards use the full width side by side; each one is a square. */
+.tasks {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: clamp(6px, 1vw, 14px);
+  align-items: center;
+}
+
+/* ---------- task card (the whole card is the toggle) ---------- */
+
+.card {
+  position: relative;
+  /* Square cards. `width` caps them so a single task does not fill the page. */
+  aspect-ratio: 1 / 1;
+  width: min(100%, 62vh);
+  justify-self: center;
+  background: var(--tint, var(--card));
+  border: 2px solid var(--edge, var(--border));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(6px, 1.1vw, 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: border-color .12s ease, box-shadow .12s ease, transform .06s ease;
+}
+
+.card[data-color="0"] { --tint: var(--t0-tint); --edge: var(--t0-edge); --strong: var(--t0-strong); }
+.card[data-color="1"] { --tint: var(--t1-tint); --edge: var(--t1-edge); --strong: var(--t1-strong); }
+.card[data-color="2"] { --tint: var(--t2-tint); --edge: var(--t2-edge); --strong: var(--t2-strong); }
+.card[data-color="3"] { --tint: var(--t3-tint); --edge: var(--t3-edge); --strong: var(--t3-strong); }
+.card[data-color="4"] { --tint: var(--t4-tint); --edge: var(--t4-edge); --strong: var(--t4-strong); }
+.card[data-color="5"] { --tint: var(--t5-tint); --edge: var(--t5-edge); --strong: var(--t5-strong); }
+
+.card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card.running {
+  border-color: var(--strong, var(--accent));
+  box-shadow: var(--shadow-run), inset 0 0 0 2px var(--strong, var(--accent));
+}
+
+/* Everything the card shows lives here, and scales with the card's own width.
+   `cqi` = 1% of this container's inline size, so 6 small cards shrink their
+   text instead of overflowing. The clamp() fallbacks keep older browsers sane. */
+.card-body {
+  container-type: inline-size;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: clamp(3px, 2cqi, 8px);
+  flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:active { transform: none; }
+}
+
+.task-name-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: .95rem;
+  font-size: clamp(.6rem, 7.5cqi, 1.15rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-menu-btn {
+  background: rgba(255, 255, 255, .7);
+  border-color: var(--edge, var(--border));
+  width: clamp(20px, 14cqi, 36px);
+  height: clamp(20px, 14cqi, 36px);
+  border-radius: clamp(6px, 3cqi, 10px);
+  font-size: clamp(.65rem, 7cqi, 1.1rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  .task-menu-btn { background: rgba(255, 255, 255, .06); }
+}
+
+.time-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 2px;
+  min-height: 0;
+}
+
+.task-time {
+  font-size: 2rem;
+  font-size: clamp(.8rem, 17cqi, 3.2rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+  line-height: 1.1;
+}
+
+/* The running card colours its own clock; the tint plus the ring is the cue. */
+.card.running .task-time {
+  color: var(--strong, var(--accent));
+  font-weight: 700;
+}
+
+/* Over the target time: red and bold. Counting up does NOT stop. */
+.task-time.over,
+.card.running .task-time.over {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+/* Target time: small and light, one line under the clock. */
+.task-target-view {
+  min-height: 1.2em;
+  font-size: .78rem;
+  font-size: clamp(.5rem, 5cqi, .82rem);
+  font-weight: 300;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.task-over {
+  min-height: 1.2em;
+  font-size: .82rem;
+  font-size: clamp(.5rem, 5.2cqi, .86rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* ---------- per-task menu ---------- */
+
+.task-menu {
+  /* A centred modal, not an in-card popover: it must not be clipped by the
+     square card, and tapping the backdrop is what closes it. */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(360px, calc(100vw - 32px));
+  z-index: 40;   /* above the shared backdrop (20) and the settings sheet (30) */
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-run);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: default;
+}
+
+.task-menu[hidden] { display: none; }
+
+.menu-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+.menu-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.menu-unit { font-size: .85rem; }
+
+.task-name,
+.task-target-h,
+.task-target-m {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.task-target-h,
+.task-target-m {
+  width: 4.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-name:focus,
+.task-target-h:focus,
+.task-target-m:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- settings sheet ---------- */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(16, 24, 40, .35);
+}
+
+.backdrop[hidden] { display: none; }
+
+.sheet {
+  position: fixed;
+  z-index: 30;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-run);
+  padding: 16px;
+}
+
+.sheet[hidden] { display: none; }
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sheet-title { font-size: 1rem; margin: 0; }
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.sheet-label { font-size: .9rem; }
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper-value {
+  min-width: 1.6em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.sheet-help {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 10px;
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+.sheet-help p { margin: 6px 0; }
+.sheet-help .note { font-size: .8rem; margin-top: 10px; }
+
+.sample-over { color: var(--danger); font-weight: 800; }
+
+kbd, .kbd-like {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .8em;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--bg);
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 700px) {
+  body { padding: 8px 10px 10px; }
+  .tasks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+  .app-title { font-size: .9rem; }
+  .total-time { font-size: 1.25rem; }
+}

@@ -1,0 +1,18 @@
+.DS_Store
+*.log
+node_modules/
+
+# --- Local Claude Code config & dev workspace (never published) ---
+.claude/
+.claudeignore
+CLAUDE.md
+scratch/
+references/
+.claude.bk/
+
+# --- Local scratch notes (temporary, not source) ---
+*.tmp.md
+memo.tmp.md
+
+# --- Handoff notes / scratch docs (never published) ---
+tmp/

@@ -517,7 +517,7 @@ function render() {
 var lastTitle = '';
 
 function updateTitle(running) {
-  var title = 'マルチタスクタイマー';
+  var title = 'Multitask Timer';
   if (running) {
     var task = findTask(state.runningId);
     if (task) title = '▶ ' + formatDuration(elapsedOf(task)) + ' ' + task.name;

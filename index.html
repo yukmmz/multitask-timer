@@ -6,6 +6,13 @@
 <meta name="color-scheme" content="light dark">
 <meta name="description" content="複数タスクを並行で進めるときに、どのタスクに何分使ったかを計測する排他ストップウォッチ。">
 <meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- Link previews (LINE / Slack など). og:image は絶対URLでないと効かない。 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Multitask Timer">
+<meta property="og:description" content="Per-task stopwatches for parallel work: exactly one task runs at a time.">
+<meta property="og:url" content="https://yukmmz.github.io/multitask-timer/">
+<meta property="og:image" content="https://yukmmz.github.io/multitask-timer/icon-192.png">
 <title>Multitask Timer</title>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -61,6 +68,11 @@
   </div>
 
   <div class="sheet-row">
+    <span class="sheet-label">共有</span>
+    <button id="qrBtn" class="btn" type="button">QR コードを表示</button>
+  </div>
+
+  <div class="sheet-row">
     <span class="sheet-label">計測時間</span>
     <button id="reset-all" class="btn btn-danger" type="button">すべて 00:00:00 に戻す</button>
   </div>
@@ -81,6 +93,7 @@
        （音量を上げただけでは鳴らないことがあります）。</p>
     <p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>Esc</kbd> 閉じる</p>
     <p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>
+    <p class="note"><span id="appVersion"></span></p>
   </div>
 </section>
 
@@ -125,6 +138,25 @@
     </div>
   </section>
 </template>
+
+<!-- QR オーバーレイ: アプリURL（左）とソースリポジトリURL（右） -->
+<div id="qrOverlay" hidden>
+  <div class="qrcard">
+    <div class="qrrow">
+      <div class="qrcol">
+        <div class="qrlabel">App</div>
+        <img class="qrImg" src="qr.svg" alt="QR code for the app URL">
+        <div class="qrurl" id="qrUrl"></div>
+      </div>
+      <div class="qrcol">
+        <div class="qrlabel">Source</div>
+        <img class="qrImg" src="src-qr.svg" alt="QR code for the source repository">
+        <div class="qrurl" id="qrSrcUrl"></div>
+      </div>
+    </div>
+    <button id="qrClose" class="btn" type="button">閉じる</button>
+  </div>
+</div>
 
 <script src="main.js"></script>
 </body>

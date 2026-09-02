@@ -516,6 +516,65 @@ kbd, .kbd-like {
   background: var(--bg);
 }
 
+
+/* ---------- QR overlay ---------- */
+
+#qrOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 24, 40, .45);
+}
+
+#qrOverlay[hidden] { display: none; }
+
+.qrcard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-run);
+  padding: 20px;
+  max-width: min(560px, calc(100vw - 32px));
+  text-align: center;
+}
+
+.qrrow {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.qrcol { flex: 0 1 210px; }
+
+.qrlabel {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* The SVG is drawn on white; keep it that way in dark mode so it stays scannable. */
+.qrImg {
+  width: 100%;
+  max-width: 190px;
+  height: auto;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.qrurl {
+  font-size: .7rem;
+  color: var(--muted);
+  word-break: break-all;
+  margin-top: 4px;
+}
+
+#qrClose { margin-top: 16px; }
+
 /* ---------- narrow screens ---------- */
 
 @media (max-width: 700px) {

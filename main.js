@@ -16,6 +16,13 @@
 
 'use strict';
 
+/* Single source of truth for the version and the URLs. The QR images encode
+ * these same URLs, and the deploy check greps APP_VERSION out of the published
+ * file — so bump it here and nowhere else. */
+var APP_VERSION = '1.0.0';
+var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
+var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
+
 var STORAGE_KEY = 'multitask-timer/v1';
 var MIN_TASKS = 1;
 var MAX_TASKS = 6;
@@ -900,6 +907,7 @@ function onKeyDown(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
 
   if (event.key === 'Escape') {
+    if (els.qrOverlay) els.qrOverlay.hidden = true;
     closeOverlays();
     return;
   }
@@ -933,6 +941,12 @@ function init() {
   els.settingsClose = document.getElementById('settings-close');
   els.testSound = document.getElementById('test-sound');
   els.soundSelect = document.getElementById('sound-select');
+  els.appVersion = document.getElementById('appVersion');
+  els.qrOverlay = document.getElementById('qrOverlay');
+  els.qrBtn = document.getElementById('qrBtn');
+  els.qrClose = document.getElementById('qrClose');
+  els.qrUrl = document.getElementById('qrUrl');
+  els.qrSrcUrl = document.getElementById('qrSrcUrl');
   els.backdrop = document.getElementById('sheet-backdrop');
 
   state = load();
@@ -953,6 +967,22 @@ function init() {
 
   els.settingsClose.addEventListener('click', function () { setSettingsOpen(false); });
   els.testSound.addEventListener('click', runSoundTest);
+
+  els.appVersion.textContent = 'Multitask Timer v' + APP_VERSION;
+
+  // The QR images encode these strings; print the same constants so the two
+  // cannot drift apart when one of them is edited.
+  els.qrUrl.textContent = APP_URL;
+  els.qrSrcUrl.textContent = SRC_URL;
+
+  els.qrBtn.addEventListener('click', function () {
+    setSettingsOpen(false);
+    els.qrOverlay.hidden = false;
+  });
+  els.qrClose.addEventListener('click', function () { els.qrOverlay.hidden = true; });
+  els.qrOverlay.addEventListener('click', function (event) {
+    if (event.target === els.qrOverlay) els.qrOverlay.hidden = true;
+  });
 
   for (var s = 0; s < SOUNDS.length; s++) {
     var option = document.createElement('option');

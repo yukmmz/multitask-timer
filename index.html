@@ -52,6 +52,11 @@
 
   <div class="sheet-row">
     <span class="sheet-label">通知音</span>
+    <select id="sound-select" class="sound-select" aria-label="通知音の種類"></select>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label">動作確認</span>
     <button id="test-sound" class="btn" type="button">音をテスト</button>
   </div>
 
@@ -68,7 +73,8 @@
        設定ウィンドウは外側をタップすると閉じます。</p>
     <p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。
        音は最初に画面をどこか一度タップしてから有効になります。</p>
-    <p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後にビープが鳴ります。
+    <p>通知音は数種類から選べます。選ぶとその場で一度鳴ります。</p>
+    <p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後に通知音が鳴ります。
        ここで鳴れば、目安時間の超過通知も同じように鳴ります。</p>
     <p><strong>iPad / iPhone で音が鳴らないとき</strong>は、
        <strong>設定 → サウンド → 消音モード を OFF</strong> にしてください

@@ -470,6 +470,16 @@ main {
 
 .sheet-label { font-size: .9rem; }
 
+.sound-select {
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  max-width: 60%;
+}
+
 .stepper {
   display: flex;
   align-items: center;

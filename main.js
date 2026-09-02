@@ -45,7 +45,7 @@ function makeTask(index) {
 function defaultState() {
   var tasks = [];
   for (var i = 0; i < DEFAULT_TASKS; i++) tasks.push(makeTask(i));
-  return { tasks: tasks, runningId: null, startedAt: null };
+  return { tasks: tasks, runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID };
 }
 
 function elapsedOf(task) {
@@ -218,7 +218,12 @@ function load() {
     });
   }
 
-  var restored = { tasks: tasks, runningId: null, startedAt: null };
+  var restored = {
+    tasks: tasks,
+    runningId: null,
+    startedAt: null,
+    soundId: findSound(parsed.soundId).id
+  };
 
   // The stored id space is not the fresh one, so map by position.
   var runningIndex = -1;
@@ -272,35 +277,244 @@ function formatTargetLabel(min) {
 
 var SAMPLE_RATE = 22050;
 var LEAD_MS = 150;      // head silence: the unlocking play stays inside it
-var TONE_MS = 220;
-var GAP_MS = 90;
-var TONE_HZ = 880;
-var TONE_COUNT = 3;
-var TONE_GAIN = 0.35;
+
+
+/* ---- tone building blocks -------------------------------------------------
+ * Every alert is synthesised from these, so the app ships no audio files. */
+
+function toneSilence(rate, sec) {
+  var out = [];
+  for (var i = 0, n = Math.round(rate * sec); i < n; i++) out.push(0);
+  return out;
+}
+
+/** Struck note: near-instant attack, exponential decay, optional overtones. */
+function toneStruck(rate, hz, sec, gain, decay, partials) {
+  var n = Math.round(rate * sec);
+  var attack = Math.round(rate * 0.006);
+  var out = [];
+  partials = partials || [[1, 1]];
+  for (var i = 0; i < n; i++) {
+    var t = i / rate;
+    var env = Math.exp(-decay * t);
+    if (i < attack) env *= i / attack;
+    var v = 0;
+    for (var k = 0; k < partials.length; k++) {
+      v += Math.sin(2 * Math.PI * hz * partials[k][0] * t) * partials[k][1];
+    }
+    out.push(v * gain * env);
+  }
+  return out;
+}
+
+/** Flat tone with short fades — the plain electronic beep. */
+function toneFlat(rate, hz, sec, gain) {
+  var n = Math.round(rate * sec);
+  var fade = Math.round(rate * 0.008);
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var env = 1;
+    if (i < fade) env = i / fade;
+    else if (i > n - fade) env = (n - i) / fade;
+    out.push(Math.sin(2 * Math.PI * hz * i / rate) * gain * env);
+  }
+  return out;
+}
+
+/** Frequency glide from f0 to f1 with an exponential decay. */
+function toneSweep(rate, f0, f1, sec, gain, decay) {
+  var n = Math.round(rate * sec);
+  var attack = Math.round(rate * 0.006);
+  var phase = 0;
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var hz = f0 + (f1 - f0) * (i / n);
+    phase += 2 * Math.PI * hz / rate;
+    var env = Math.exp(-decay * (i / rate));
+    if (i < attack) env *= i / attack;
+    out.push(Math.sin(phase) * gain * env);
+  }
+  return out;
+}
+
+/** Several notes at once, fading in and out — no attack at all. */
+function tonePad(rate, hzList, sec, gain) {
+  var n = Math.round(rate * sec);
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var env = Math.sin(Math.PI * (i / n));   // 0 -> 1 -> 0
+    var v = 0;
+    for (var k = 0; k < hzList.length; k++) {
+      v += Math.sin(2 * Math.PI * hzList[k] * i / rate);
+    }
+    out.push(v / hzList.length * gain * env);
+  }
+  return out;
+}
+
+function toneJoin(parts) {
+  var out = [];
+  for (var i = 0; i < parts.length; i++) out = out.concat(parts[i]);
+  return out;
+}
+
+/** Mix `b` into `a` starting at `offsetSec`, so notes can ring into each other. */
+function toneOverlay(rate, a, b, offsetSec) {
+  var off = Math.round(rate * offsetSec);
+  var out = a.slice();
+  for (var i = 0; i < b.length; i++) {
+    var at = off + i;
+    out[at] = (out[at] || 0) + b[i];
+  }
+  return out;
+}
+
+/* ---- the alert sounds ---------------------------------------------------
+ * Ordered from calm to insistent. Overtone sets are shared so related sounds
+ * keep the same character. */
+
+var P_SOFT = [[1, 1], [2, 0.2]];
+var P_WOOD = [[1, 1], [2, 0.25], [3, 0.08]];
+var P_GLASS = [[1, 1], [2.4, 0.35], [4.1, 0.15]];
+var P_BELL = [[1, 1], [2.76, 0.28], [5.4, 0.1]];
+var P_MUSICBOX = [[1, 1], [3, 0.12], [5, 0.05]];
+var P_KNOCK = [[1, 1], [1.6, 0.3]];
+
+/** Notes struck one after another, each ringing into the next. */
+function toneArpeggio(rate, notes, stepSec) {
+  var out = toneSilence(rate, LEAD_MS / 1000);
+  for (var i = 0; i < notes.length; i++) {
+    out = toneOverlay(rate, out, notes[i], LEAD_MS / 1000 + i * stepSec);
+  }
+  return out;
+}
+
+var SOUNDS = [
+  {
+    id: 'chime',
+    name: 'チャイム（3音）',
+    build: function (rate) {
+      return toneArpeggio(rate, [toneStruck(rate, 523, 1.2, 0.22, 4.5, P_SOFT),
+                                 toneStruck(rate, 659, 1.2, 0.22, 4.5, P_SOFT),
+                                 toneStruck(rate, 784, 1.4, 0.22, 4, P_SOFT)], 0.14);
+    }
+  },
+  {
+    id: 'musicbox',
+    name: 'オルゴール（3音）',
+    build: function (rate) {
+      return toneArpeggio(rate, [toneStruck(rate, 1047, 1.6, 0.16, 3, P_MUSICBOX),
+                                 toneStruck(rate, 1319, 1.6, 0.16, 3, P_MUSICBOX),
+                                 toneStruck(rate, 1568, 1.8, 0.16, 2.6, P_MUSICBOX)], 0.12);
+    }
+  },
+  {
+    id: 'glocken',
+    name: 'グロッケン（2音）',
+    build: function (rate) {
+      return toneArpeggio(rate, [toneStruck(rate, 1047, 0.9, 0.18, 5, P_GLASS),
+                                 toneStruck(rate, 1568, 1.1, 0.18, 4.5, P_GLASS)], 0.11);
+    }
+  },
+  {
+    id: 'harp',
+    name: 'ハープ（4音）',
+    build: function (rate) {
+      return toneArpeggio(rate, [toneStruck(rate, 523, 1.4, 0.16, 4, P_SOFT),
+                                 toneStruck(rate, 659, 1.4, 0.16, 4, P_SOFT),
+                                 toneStruck(rate, 784, 1.4, 0.16, 4, P_SOFT),
+                                 toneStruck(rate, 1047, 1.6, 0.16, 3.5, P_SOFT)], 0.09);
+    }
+  },
+  {
+    id: 'bell',
+    name: 'ベル（1音）',
+    build: function (rate) {
+      return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                       toneStruck(rate, 587, 1.6, 0.26, 3.2, P_BELL)]);
+    }
+  },
+  {
+    id: 'marimba',
+    name: '木琴（2音）',
+    build: function (rate) {
+      return toneArpeggio(rate, [toneStruck(rate, 523, 0.7, 0.3, 7, P_WOOD),
+                                 toneStruck(rate, 784, 0.9, 0.3, 6, P_WOOD)], 0.16);
+    }
+  },
+  {
+    id: 'chord',
+    name: '和音ひとつ',
+    build: function (rate) {
+      return toneArpeggio(rate, [toneStruck(rate, 392, 1.6, 0.16, 3.5, P_SOFT),
+                                 toneStruck(rate, 494, 1.6, 0.16, 3.5, P_SOFT),
+                                 toneStruck(rate, 587, 1.6, 0.16, 3.5, P_SOFT)], 0);
+    }
+  },
+  {
+    id: 'soft',
+    name: 'ポーン（控えめ）',
+    build: function (rate) {
+      return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                       toneStruck(rate, 523, 1.0, 0.18, 5, [[1, 1], [2, 0.15]])]);
+    }
+  },
+  {
+    id: 'pad',
+    name: 'ふわっとパッド',
+    build: function (rate) {
+      return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                       tonePad(rate, [392, 494, 587], 1.4, 0.24)]);
+    }
+  },
+  {
+    id: 'knock',
+    name: 'ノック（2回）',
+    build: function (rate) {
+      return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                       toneStruck(rate, 320, 0.3, 0.3, 20, P_KNOCK),
+                       toneSilence(rate, 0.14),
+                       toneStruck(rate, 320, 0.3, 0.3, 20, P_KNOCK)]);
+    }
+  },
+  {
+    id: 'blip',
+    name: 'ピロン（2回）',
+    build: function (rate) {
+      return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                       toneSweep(rate, 440, 900, 0.28, 0.22, 5),
+                       toneSilence(rate, 0.1),
+                       toneSweep(rate, 440, 900, 0.28, 0.22, 5)]);
+    }
+  },
+  {
+    id: 'beep',
+    name: 'ビープ（3回・目立つ）',
+    build: function (rate) {
+      return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                       toneFlat(rate, 880, 0.22, 0.35), toneSilence(rate, 0.09),
+                       toneFlat(rate, 880, 0.22, 0.35), toneSilence(rate, 0.09),
+                       toneFlat(rate, 880, 0.22, 0.35)]);
+    }
+  }
+];
+
+var DEFAULT_SOUND_ID = 'chime';
+
+function findSound(id) {
+  for (var i = 0; i < SOUNDS.length; i++) {
+    if (SOUNDS[i].id === id) return SOUNDS[i];
+  }
+  return SOUNDS[0];
+}
 
 var beepAudio = null;
 var audioUnlocked = false;
+var builtSoundId = null;
 
-/** The alert as samples in [-1, 1]: silence, then three enveloped tones. */
+/** Samples for the currently chosen alert, lead silence included. */
 function beepSamples(rate) {
-  var lead = Math.round(rate * LEAD_MS / 1000);
-  var tone = Math.round(rate * TONE_MS / 1000);
-  var gap = Math.round(rate * GAP_MS / 1000);
-  var fade = Math.round(rate * 0.008);   // 8 ms in and out, to kill the click
-  var out = [];
-  var i, j, env;
-
-  for (i = 0; i < lead; i++) out.push(0);
-  for (j = 0; j < TONE_COUNT; j++) {
-    if (j > 0) for (i = 0; i < gap; i++) out.push(0);
-    for (i = 0; i < tone; i++) {
-      env = 1;
-      if (i < fade) env = i / fade;
-      else if (i > tone - fade) env = (tone - i) / fade;
-      out.push(Math.sin(2 * Math.PI * TONE_HZ * i / rate) * TONE_GAIN * env);
-    }
-  }
-  return out;
+  return findSound(state ? state.soundId : DEFAULT_SOUND_ID).build(rate);
 }
 
 /** Wrap samples in a 16-bit mono WAV and return it as a data: URI. */
@@ -329,13 +543,30 @@ function wavDataUri(samples, rate) {
 
 /** Build the clip once. */
 function ensureBeepAudio() {
-  if (beepAudio || !window.Audio || !window.btoa) return;
+  if (!window.Audio || !window.btoa) return;
+  var wanted = state ? state.soundId : DEFAULT_SOUND_ID;
+  if (beepAudio && builtSoundId === wanted) return;
   try {
-    beepAudio = new window.Audio(wavDataUri(beepSamples(SAMPLE_RATE), SAMPLE_RATE));
-    beepAudio.preload = 'auto';
+    var uri = wavDataUri(beepSamples(SAMPLE_RATE), SAMPLE_RATE);
+    if (beepAudio) beepAudio.src = uri;    // keep the element: it stays unlocked
+    else {
+      beepAudio = new window.Audio(uri);
+      beepAudio.preload = 'auto';
+    }
+    builtSoundId = wanted;
   } catch (e) {
     beepAudio = null;
+    builtSoundId = null;
   }
+}
+
+/** Switch alert sound and play it once, so the choice is audible immediately. */
+function setSound(id) {
+  state.soundId = findSound(id).id;
+  save();
+  ensureBeepAudio();
+  audioUnlocked = true;     // we are inside the change gesture
+  beep();
 }
 
 /** On a user gesture, start and stop the clip so later plays are permitted. */
@@ -701,6 +932,7 @@ function init() {
   els.settingsPanel = document.getElementById('settings-panel');
   els.settingsClose = document.getElementById('settings-close');
   els.testSound = document.getElementById('test-sound');
+  els.soundSelect = document.getElementById('sound-select');
   els.backdrop = document.getElementById('sheet-backdrop');
 
   state = load();
@@ -721,6 +953,17 @@ function init() {
 
   els.settingsClose.addEventListener('click', function () { setSettingsOpen(false); });
   els.testSound.addEventListener('click', runSoundTest);
+
+  for (var s = 0; s < SOUNDS.length; s++) {
+    var option = document.createElement('option');
+    option.value = SOUNDS[s].id;
+    option.textContent = SOUNDS[s].name;
+    els.soundSelect.appendChild(option);
+  }
+  els.soundSelect.value = state.soundId;
+  els.soundSelect.addEventListener('change', function () {
+    setSound(els.soundSelect.value);
+  });
   els.backdrop.addEventListener('click', closeOverlays);
 
   els.resetAll.addEventListener('click', function () {

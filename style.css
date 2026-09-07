@@ -435,24 +435,32 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 2px;
   }
 }
 
+/* No frame and no fill: the column has to disappear into the sheet, the way
+   the iOS picker does. What marks the choice is the band, not a box. */
 .wheel {
+  position: relative;
+  z-index: 1;
   height: 200px;            /* 5 rows of 40px */
-  width: 64px;
+  width: 58px;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   text-align: center;
-  border-radius: 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: none;
+  border: 0;
   /* Half the wheel minus half a row, so the first and last values can sit in
      the middle band. */
   padding: 80px 0;
+  /* Rows dissolve towards the edges instead of being cut off by a border. */
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%, #000 26%, #000 74%, transparent 100%);
+  mask-image: linear-gradient(to bottom,
+      transparent 0%, #000 26%, #000 74%, transparent 100%);
 }
 
 .wheel::-webkit-scrollbar { display: none; }
@@ -460,24 +468,29 @@ main {
 .wheel:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: 10px;
 }
 
 .wheel-item {
   height: 40px;
   line-height: 40px;
   scroll-snap-align: center;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  transition: color .12s ease, font-weight .12s ease;
+  opacity: .55;
+  transition: opacity .12s ease, font-size .12s ease;
 }
 
 .wheel-item.selected {
   color: var(--text);
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 600;
+  opacity: 1;
 }
 
-/* The band marks which row counts as chosen. It must not eat touches. */
+/* The band sits behind the numbers, has no edges, and is barely there — just
+   enough contrast to say which row counts. It must not eat touches. */
 .wheel-band {
   position: absolute;
   left: 0;
@@ -485,10 +498,21 @@ main {
   top: 50%;
   height: 40px;
   transform: translateY(-50%);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: rgba(45, 100, 232, .07);
+  border-radius: 10px;
+  background: rgba(20, 24, 32, .06);
   pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .wheel-band { background: rgba(255, 255, 255, .08); }
+}
+
+/* The unit labels ride inside the band, as the iOS picker puts them. */
+.wheel-row .menu-unit {
+  position: relative;
+  z-index: 1;
+  font-size: .8rem;
 }
 
 /* ---------- settings sheet ---------- */

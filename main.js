@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.1.0';
+var APP_VERSION = '1.1.1';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
@@ -681,13 +681,16 @@ function setWheelValue(el, value) {
   el.scrollTop = value * WHEEL_ITEM_H;
 }
 
-/** Bold the value in the band, so the wheel reads like the iOS one. */
+/** Emphasise the value in the band, so the wheel reads like the iOS one.
+ *  Called on every scroll event, so it only touches what changed. */
 function markWheelSelection(el, value) {
+  if (el.markedIndex === value) return;
   var items = el.children;
-  for (var i = 0; i < items.length; i++) {
-    var on = i === value;
-    if (items[i].classList) items[i].classList.toggle('selected', on);
-  }
+  var previous = items[el.markedIndex];
+  if (previous && previous.classList) previous.classList.remove('selected');
+  var current = items[value];
+  if (current && current.classList) current.classList.add('selected');
+  el.markedIndex = value;
 }
 
 /* -------------------------------------------------------------------- DOM */
@@ -879,6 +882,9 @@ function bindCard(card, task, index) {
   // it settles rather than on every frame.
   function onWheelScroll() {
     if (card.wheelSyncing) return;
+    // Follow the finger; the value itself is only committed once it settles.
+    markWheelSelection(card.wheelH, wheelValue(card.wheelH, 24));
+    markWheelSelection(card.wheelM, wheelValue(card.wheelM, 59));
     if (card.wheelTimer !== null) window.clearTimeout(card.wheelTimer);
     card.wheelTimer = window.setTimeout(function () {
       card.wheelTimer = null;

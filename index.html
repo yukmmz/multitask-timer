@@ -85,6 +85,7 @@
        設定ウィンドウは外側をタップすると閉じます。</p>
     <p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。
        音は最初に画面をどこか一度タップしてから有効になります。</p>
+    <p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>
     <p>通知音は数種類から選べます。選ぶとその場で一度鳴ります。</p>
     <p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後に通知音が鳴ります。
        ここで鳴れば、目安時間の超過通知も同じように鳴ります。</p>
@@ -132,6 +133,17 @@
                  inputmode="numeric" placeholder="0" aria-label="目安時間（分）">
           <span class="menu-unit">分</span>
         </span>
+
+        <!-- Touch devices get these instead; see the pointer: coarse rules. -->
+        <div class="wheel-row">
+          <div class="wheel task-wheel-h" tabindex="0" role="listbox"
+               aria-label="目安時間（時間）"></div>
+          <span class="menu-unit">時間</span>
+          <div class="wheel task-wheel-m" tabindex="0" role="listbox"
+               aria-label="目安時間（分）"></div>
+          <span class="menu-unit">分</span>
+          <div class="wheel-band" aria-hidden="true"></div>
+        </div>
       </div>
 
       <button class="btn btn-danger task-reset" type="button">時間リセット</button>

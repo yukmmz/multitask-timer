@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.0.0';
+var APP_VERSION = '1.1.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
@@ -644,6 +644,52 @@ function runSoundTest() {
   }, 1000);
 }
 
+/* ---- target-time wheels ---------------------------------------------------
+ * An iOS-alarm-style picker for coarse pointers. The wheels and the number
+ * fields both write `task.targetMin`, so whichever the device shows, the stored
+ * value is the same. */
+
+var WHEEL_ITEM_H = 40;      // must match .wheel-item height in style.css
+var WHEEL_ROWS = 5;         // must match .wheel height / WHEEL_ITEM_H
+
+/** True when the primary input is a finger rather than a mouse. */
+function isCoarsePointer() {
+  return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+}
+
+/** Fill a wheel with 0..count-1. */
+function buildWheel(el, count) {
+  for (var i = 0; i < count; i++) {
+    var item = document.createElement('div');
+    item.className = 'wheel-item';
+    item.textContent = String(i);
+    el.appendChild(item);
+  }
+}
+
+/** Which value is sitting in the middle band right now. */
+function wheelValue(el, max) {
+  var index = Math.round((el.scrollTop || 0) / WHEEL_ITEM_H);
+  if (index < 0) index = 0;
+  if (index > max) index = max;
+  return index;
+}
+
+/** Scroll a wheel so `value` lands in the band. Does nothing while hidden:
+ *  a display:none element cannot be scrolled, so call this after opening. */
+function setWheelValue(el, value) {
+  el.scrollTop = value * WHEEL_ITEM_H;
+}
+
+/** Bold the value in the band, so the wheel reads like the iOS one. */
+function markWheelSelection(el, value) {
+  var items = el.children;
+  for (var i = 0; i < items.length; i++) {
+    var on = i === value;
+    if (items[i].classList) items[i].classList.toggle('selected', on);
+  }
+}
+
 /* -------------------------------------------------------------------- DOM */
 
 var els = {};
@@ -669,6 +715,8 @@ function openTaskMenu(index) {
   card.menuBtn.setAttribute('aria-expanded', 'true');
   openMenuIndex = index;
   syncBackdrop();
+  // The wheels could not be scrolled while the menu was display:none.
+  syncWheels(card, state.tasks[index]);
 }
 
 function setSettingsOpen(open) {
@@ -707,6 +755,8 @@ function buildCards() {
       over: node.querySelector('.task-over'),
       targetH: node.querySelector('.task-target-h'),
       targetM: node.querySelector('.task-target-m'),
+      wheelH: node.querySelector('.task-wheel-h'),
+      wheelM: node.querySelector('.task-wheel-m'),
       targetView: node.querySelector('.task-target-view'),
       menu: node.querySelector('.task-menu'),
       menuBtn: node.querySelector('.task-menu-btn'),
@@ -716,7 +766,9 @@ function buildCards() {
       lastName: '',
       lastTargetView: '',
       lastRunning: null,
-      lastIsOver: null
+      lastIsOver: null,
+      wheelTimer: null,
+      wheelSyncing: false
     };
     bindCard(card, state.tasks[i], i);
     els.tasks.appendChild(node);
@@ -728,15 +780,38 @@ function buildCards() {
 
 /** Fill the menu's hour/minute fields from the task (blank means zero). */
 function writeTargetInputs(card, task) {
+  var h = task.targetMin === null ? 0 : Math.floor(task.targetMin / 60);
+  var m = task.targetMin === null ? 0 : task.targetMin % 60;
+
   if (task.targetMin === null) {
     card.targetH.value = '';
     card.targetM.value = '';
-    return;
+  } else {
+    card.targetH.value = h === 0 ? '' : String(h);
+    card.targetM.value = m === 0 ? '' : String(m);
   }
-  var h = Math.floor(task.targetMin / 60);
-  var m = task.targetMin % 60;
-  card.targetH.value = h === 0 ? '' : String(h);
-  card.targetM.value = m === 0 ? '' : String(m);
+
+  markWheelSelection(card.wheelH, h);
+  markWheelSelection(card.wheelM, m);
+}
+
+/** Move the wheels to the task's value. Only works once the menu is visible. */
+function syncWheels(card, task) {
+  var h = task.targetMin === null ? 0 : Math.floor(task.targetMin / 60);
+  var m = task.targetMin === null ? 0 : task.targetMin % 60;
+  card.wheelSyncing = true;
+  setWheelValue(card.wheelH, h);
+  setWheelValue(card.wheelM, m);
+  markWheelSelection(card.wheelH, h);
+  markWheelSelection(card.wheelM, m);
+  card.wheelSyncing = false;
+}
+
+/** Read the wheels. Returns minutes, or null for "no target". */
+function readWheels(card) {
+  var total = wheelValue(card.wheelH, 24) * 60 + wheelValue(card.wheelM, 59);
+  if (total <= 0) return null;
+  return total > 1440 ? 1440 : total;
 }
 
 /** Read the menu's hour/minute fields. Returns minutes, or null for "no target". */
@@ -796,6 +871,27 @@ function bindCard(card, task, index) {
   }
   card.targetH.addEventListener('input', onTargetInput);
   card.targetM.addEventListener('input', onTargetInput);
+
+  buildWheel(card.wheelH, 25);   // 0..24 hours
+  buildWheel(card.wheelM, 60);   // 0..59 minutes
+
+  // Momentum scrolling fires a burst of events and then stops; commit once
+  // it settles rather than on every frame.
+  function onWheelScroll() {
+    if (card.wheelSyncing) return;
+    if (card.wheelTimer !== null) window.clearTimeout(card.wheelTimer);
+    card.wheelTimer = window.setTimeout(function () {
+      card.wheelTimer = null;
+      task.targetMin = readWheels(card);
+      task.notified = false;
+      save();
+      writeTargetInputs(card, task);
+      render();
+    }, 140);
+  }
+
+  card.wheelH.addEventListener('scroll', onWheelScroll);
+  card.wheelM.addEventListener('scroll', onWheelScroll);
 
   card.reset.addEventListener('click', function (event) {
     event.stopPropagation();

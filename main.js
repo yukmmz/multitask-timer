@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.2.0';
+var APP_VERSION = '1.2.1';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
@@ -581,16 +581,16 @@ function unlockAudio() {
   ensureBeepAudio();
   if (!beepAudio || audioUnlocked) return;
   try {
+    // Start and stop in the same turn. Waiting on the play() promise would
+    // pause only after playback had begun, and on a slow start that is past
+    // the clip's lead silence — which is audible as a beep on the first tap.
     var promise = beepAudio.play();
-    var stop = function () {
-      beepAudio.pause();
-      try { beepAudio.currentTime = 0; } catch (e) { /* ignore */ }
-      audioUnlocked = true;
-    };
-    if (promise && typeof promise.then === 'function') {
-      promise.then(stop, function () { /* refused: the next gesture retries */ });
-    } else {
-      stop();
+    beepAudio.pause();
+    try { beepAudio.currentTime = 0; } catch (e) { /* ignore */ }
+    audioUnlocked = true;
+    // Pausing that quickly rejects the promise; that is the expected path.
+    if (promise && typeof promise['catch'] === 'function') {
+      promise['catch'](function () { /* ignore */ });
     }
   } catch (e) {
     /* Refused: the next gesture retries. */

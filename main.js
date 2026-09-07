@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.1.1';
+var APP_VERSION = '1.2.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
@@ -647,50 +647,89 @@ function runSoundTest() {
 /* ---- target-time wheels ---------------------------------------------------
  * An iOS-alarm-style picker for coarse pointers. The wheels and the number
  * fields both write `task.targetMin`, so whichever the device shows, the stored
- * value is the same. */
+ * value is the same.
+ *
+ * The minute wheel wraps: 59 is followed by 0 and 0 is preceded by 59. That is
+ * done by stacking several copies of 0..59 and, once the scroll has settled,
+ * jumping back to the middle copy. The jump is invisible because the row under
+ * the band shows the same number either way, and it happens at rest so it never
+ * cuts a flick short. Hours stay bounded — a target of 24 hours has an end.
+ */
 
 var WHEEL_ITEM_H = 40;      // must match .wheel-item height in style.css
 var WHEEL_ROWS = 5;         // must match .wheel height / WHEEL_ITEM_H
+
+var MINUTE_COPIES = 7;      // enough that one flick cannot run off the stack
+var MINUTE_HOME = 3;        // the copy the wheel is recentred on
 
 /** True when the primary input is a finger rather than a mouse. */
 function isCoarsePointer() {
   return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
 }
 
-/** Fill a wheel with 0..count-1. */
-function buildWheel(el, count) {
-  for (var i = 0; i < count; i++) {
-    var item = document.createElement('div');
-    item.className = 'wheel-item';
-    item.textContent = String(i);
-    el.appendChild(item);
+/** Fill a wheel with `copies` runs of 0..count-1. */
+function buildWheel(el, count, copies) {
+  for (var c = 0; c < (copies || 1); c++) {
+    for (var i = 0; i < count; i++) {
+      var item = document.createElement('div');
+      item.className = 'wheel-item';
+      item.textContent = String(i);
+      el.appendChild(item);
+    }
   }
 }
 
-/** Which value is sitting in the middle band right now. */
-function wheelValue(el, max) {
-  var index = Math.round((el.scrollTop || 0) / WHEEL_ITEM_H);
-  if (index < 0) index = 0;
-  if (index > max) index = max;
-  return index;
+/** Which row is under the band, counting from the top of the whole stack. */
+function wheelRow(el) {
+  var row = Math.round((el.scrollTop || 0) / WHEEL_ITEM_H);
+  return row < 0 ? 0 : row;
+}
+
+/** The value under the band. Wrapping wheels take the remainder; bounded ones
+ *  clamp, so overscrolling past the end still reads as the last value. */
+function wheelValue(el, count, wrap) {
+  var row = wheelRow(el);
+  if (wrap) return ((row % count) + count) % count;
+  return row > count - 1 ? count - 1 : row;
 }
 
 /** Scroll a wheel so `value` lands in the band. Does nothing while hidden:
  *  a display:none element cannot be scrolled, so call this after opening. */
-function setWheelValue(el, value) {
-  el.scrollTop = value * WHEEL_ITEM_H;
+function setWheelValue(el, value, wrap) {
+  var row = wrap ? MINUTE_HOME * 60 + value : value;
+  el.scrollTop = row * WHEEL_ITEM_H;
 }
 
-/** Emphasise the value in the band, so the wheel reads like the iOS one.
+/** Slide the stack back to the middle copy, keeping the same number under the
+ *  band. Returns true when it moved. Only safe once scrolling has stopped. */
+function recentreWheel(el, count) {
+  var row = wheelRow(el);
+  var copy = Math.floor(row / count);
+  if (copy === MINUTE_HOME) return false;
+  el.scrollTop += (MINUTE_HOME - copy) * count * WHEEL_ITEM_H;
+  return true;
+}
+
+/** Emphasise the row in the band, so the wheel reads like the iOS one.
  *  Called on every scroll event, so it only touches what changed. */
-function markWheelSelection(el, value) {
-  if (el.markedIndex === value) return;
+function markWheelRow(el, row) {
+  if (el.markedIndex === row) return;
   var items = el.children;
   var previous = items[el.markedIndex];
   if (previous && previous.classList) previous.classList.remove('selected');
-  var current = items[value];
+  var current = items[row];
   if (current && current.classList) current.classList.add('selected');
-  el.markedIndex = value;
+  el.markedIndex = row;
+}
+
+/** Ease onto the nearest row. Snapping is `proximity` rather than `mandatory`
+ *  so a flick keeps its momentum; this is what guarantees it still lands
+ *  aligned once the glide is over. */
+function alignWheel(el) {
+  var target = wheelRow(el) * WHEEL_ITEM_H;
+  if (Math.abs(el.scrollTop - target) < 1) return;
+  if (el.scrollTo) el.scrollTo({ top: target, behavior: 'smooth' });
+  else el.scrollTop = target;
 }
 
 /* -------------------------------------------------------------------- DOM */
@@ -794,8 +833,8 @@ function writeTargetInputs(card, task) {
     card.targetM.value = m === 0 ? '' : String(m);
   }
 
-  markWheelSelection(card.wheelH, h);
-  markWheelSelection(card.wheelM, m);
+  markWheelRow(card.wheelH, h);
+  markWheelRow(card.wheelM, wheelRow(card.wheelM));
 }
 
 /** Move the wheels to the task's value. Only works once the menu is visible. */
@@ -803,16 +842,17 @@ function syncWheels(card, task) {
   var h = task.targetMin === null ? 0 : Math.floor(task.targetMin / 60);
   var m = task.targetMin === null ? 0 : task.targetMin % 60;
   card.wheelSyncing = true;
-  setWheelValue(card.wheelH, h);
-  setWheelValue(card.wheelM, m);
-  markWheelSelection(card.wheelH, h);
-  markWheelSelection(card.wheelM, m);
+  setWheelValue(card.wheelH, h, false);
+  setWheelValue(card.wheelM, m, true);
+  markWheelRow(card.wheelH, h);
+  markWheelRow(card.wheelM, MINUTE_HOME * 60 + m);
   card.wheelSyncing = false;
 }
 
 /** Read the wheels. Returns minutes, or null for "no target". */
 function readWheels(card) {
-  var total = wheelValue(card.wheelH, 24) * 60 + wheelValue(card.wheelM, 59);
+  var total = wheelValue(card.wheelH, 25, false) * 60 +
+              wheelValue(card.wheelM, 60, true);
   if (total <= 0) return null;
   return total > 1440 ? 1440 : total;
 }
@@ -875,23 +915,34 @@ function bindCard(card, task, index) {
   card.targetH.addEventListener('input', onTargetInput);
   card.targetM.addEventListener('input', onTargetInput);
 
-  buildWheel(card.wheelH, 25);   // 0..24 hours
-  buildWheel(card.wheelM, 60);   // 0..59 minutes
+  buildWheel(card.wheelH, 25, 1);                // 0..24 hours, bounded
+  buildWheel(card.wheelM, 60, MINUTE_COPIES);   // 0..59 minutes, wrapping
 
   // Momentum scrolling fires a burst of events and then stops; commit once
   // it settles rather than on every frame.
   function onWheelScroll() {
     if (card.wheelSyncing) return;
     // Follow the finger; the value itself is only committed once it settles.
-    markWheelSelection(card.wheelH, wheelValue(card.wheelH, 24));
-    markWheelSelection(card.wheelM, wheelValue(card.wheelM, 59));
+    markWheelRow(card.wheelH, wheelRow(card.wheelH));
+    markWheelRow(card.wheelM, wheelRow(card.wheelM));
     if (card.wheelTimer !== null) window.clearTimeout(card.wheelTimer);
     card.wheelTimer = window.setTimeout(function () {
       card.wheelTimer = null;
       task.targetMin = readWheels(card);
       task.notified = false;
       save();
-      writeTargetInputs(card, task);
+
+      // The glide is over, so the stack can be shifted and the row squared up
+      // without either being felt.
+      card.wheelSyncing = true;
+      recentreWheel(card.wheelM, 60);
+      alignWheel(card.wheelH);
+      alignWheel(card.wheelM);
+      markWheelRow(card.wheelH, wheelRow(card.wheelH));
+      markWheelRow(card.wheelM, wheelRow(card.wheelM));
+      // Smooth scrolling keeps firing events; ignore them rather than looping.
+      window.setTimeout(function () { card.wheelSyncing = false; }, 400);
+
       render();
     }, 140);
   }

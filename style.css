@@ -447,8 +447,11 @@ main {
   height: 200px;            /* 5 rows of 40px */
   width: 58px;
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  /* proximity, not mandatory: a flick keeps its momentum instead of being
+     caught by the next snap point. alignWheel() squares it up at rest. */
+  scroll-snap-type: y proximity;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   scrollbar-width: none;
   text-align: center;
   background: none;

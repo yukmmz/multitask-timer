@@ -673,6 +673,70 @@ kbd, .kbd-like {
 
 #qrClose { margin-top: 16px; }
 
+/* ---------- changelog overlay ---------- */
+
+#changelogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 24, 40, .45);
+}
+
+#changelogOverlay[hidden] { display: none; }
+
+.changelog-card {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.changelog-title { font-size: 1rem; margin: 0 0 8px; }
+
+.changelog-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.changelog-entry + .changelog-entry {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.changelog-version { font-size: .9rem; margin: 0 0 4px; }
+
+.changelog-entry ul {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+#changelogClose { margin-top: 12px; align-self: center; }
+
+/* A small dot on ⚙ and on the changelog button until the new version's
+ * changelog has been opened once. */
+#settings-btn, #changelogBtn { position: relative; }
+
+#settings-btn.has-news::after,
+#changelogBtn.has-news::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
 /* ---------- narrow screens ---------- */
 
 @media (max-width: 700px) {

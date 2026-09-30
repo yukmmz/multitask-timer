@@ -83,6 +83,11 @@
   </div>
 
   <div class="sheet-row">
+    <span class="sheet-label">更新履歴</span>
+    <button id="changelogBtn" class="btn" type="button">更新履歴を見る</button>
+  </div>
+
+  <div class="sheet-row">
     <span class="sheet-label">計測時間</span>
     <button id="reset-all" class="btn btn-danger" type="button">すべて 00:00:00 に戻す</button>
   </div>
@@ -180,6 +185,15 @@
       </div>
     </div>
     <button id="qrClose" class="btn" type="button">閉じる</button>
+  </div>
+</div>
+
+<!-- 更新履歴: 新しい順。中身は main.js の CHANGELOG から組み立てる -->
+<div id="changelogOverlay" hidden>
+  <div class="qrcard changelog-card" role="dialog" aria-label="更新履歴">
+    <h2 class="changelog-title">更新履歴</h2>
+    <div id="changelogList" class="changelog-list"></div>
+    <button id="changelogClose" class="btn" type="button">閉じる</button>
   </div>
 </div>
 

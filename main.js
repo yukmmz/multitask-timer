@@ -19,9 +19,40 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.3.0';
+var APP_VERSION = '1.4.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
+
+/* What changed, newest first, shown from the settings sheet. Bumping
+ * APP_VERSION means adding an entry here: the test checks that the first
+ * entry matches APP_VERSION. Written for users, so in Japanese. */
+var CHANGELOG = [
+  { version: '1.4.0', date: '2026-09-30', items: [
+    '設定（⚙）から更新履歴を見られるようにしました。新しい版を初めて開いたときは ⚙ に印が付きます'
+  ] },
+  { version: '1.3.0', date: '2026-09-30', items: [
+    '止め忘れたタスクを自動停止するようにしました（目安あり: 目安＋2時間、目安なし: 5時間。⚙ で変更可）',
+    '画面オフ中は表示の更新を止め、電池の消費を抑えるようにしました'
+  ] },
+  { version: '1.2.1', date: '2026-09-08', items: [
+    '最初のタップで通知音が鳴ってしまう問題を修正しました'
+  ] },
+  { version: '1.2.0', date: '2026-09-08', items: [
+    '分のホイールが 59→0 でつながるようにしました',
+    'ホイールをはじいたとき、途中で止まらないようにしました'
+  ] },
+  { version: '1.1.1', date: '2026-09-08', items: [
+    'ホイールの見た目を調整しました'
+  ] },
+  { version: '1.1.0', date: '2026-09-08', items: [
+    'iPad / スマートフォンでは、目安時間をホイールで選べるようにしました'
+  ] },
+  { version: '1.0.0', date: '2026-09-03', items: [
+    '最初の公開版: タスク別の排他ストップウォッチ、目安時間と超過通知',
+    '通知音 12 種類と音のテスト、QR コードでの共有'
+  ] }
+];
+var SEEN_VERSION_KEY = 'multitask-timer/seen-version';
 
 var STORAGE_KEY = 'multitask-timer/v1';
 var MIN_TASKS = 1;
@@ -1147,6 +1178,60 @@ function updateTitle(running) {
   }
 }
 
+/* --------------------------------------------------------------- changelog */
+
+function readSeenVersion() {
+  try { return window.localStorage.getItem(SEEN_VERSION_KEY); } catch (e) { return null; }
+}
+
+function writeSeenVersion() {
+  try { window.localStorage.setItem(SEEN_VERSION_KEY, APP_VERSION); } catch (e) { /* ignore */ }
+}
+
+/** First visit ever: nothing is "new", so record the version quietly. A user
+ *  who already had data but no seen-version is upgrading, and gets the mark. */
+function initSeenVersion() {
+  if (readSeenVersion() !== null) return;
+  var hadData = false;
+  try { hadData = window.localStorage.getItem(STORAGE_KEY) !== null; } catch (e) { /* ignore */ }
+  if (!hadData) writeSeenVersion();
+}
+
+function syncNewsMark() {
+  var hasNews = readSeenVersion() !== APP_VERSION;
+  els.settingsBtn.classList.toggle('has-news', hasNews);
+  els.changelogBtn.classList.toggle('has-news', hasNews);
+}
+
+function buildChangelog() {
+  els.changelogList.textContent = '';
+  for (var i = 0; i < CHANGELOG.length; i++) {
+    var entry = CHANGELOG[i];
+    var section = document.createElement('section');
+    section.className = 'changelog-entry';
+    var head = document.createElement('h3');
+    head.className = 'changelog-version';
+    head.textContent = 'v' + entry.version + '（' + entry.date + '）';
+    section.appendChild(head);
+    var list = document.createElement('ul');
+    for (var j = 0; j < entry.items.length; j++) {
+      var li = document.createElement('li');
+      li.textContent = entry.items[j];
+      list.appendChild(li);
+    }
+    section.appendChild(list);
+    els.changelogList.appendChild(section);
+  }
+}
+
+function openChangelog() {
+  setSettingsOpen(false);
+  els.changelogOverlay.hidden = false;
+  if (els.changelogList.scrollTop) els.changelogList.scrollTop = 0;
+  writeSeenVersion();
+  syncNewsMark();
+}
+
 /* -------------------------------------------------------------------- init */
 
 /** Fill an auto-stop <select> and write the choice to `state[key]`.
@@ -1173,6 +1258,7 @@ function onKeyDown(event) {
 
   if (event.key === 'Escape') {
     if (els.qrOverlay) els.qrOverlay.hidden = true;
+    if (els.changelogOverlay) els.changelogOverlay.hidden = true;
     closeOverlays();
     return;
   }
@@ -1215,6 +1301,10 @@ function init() {
   els.backdrop = document.getElementById('sheet-backdrop');
   els.autoStopExtra = document.getElementById('auto-stop-extra');
   els.autoStopNoTarget = document.getElementById('auto-stop-no-target');
+  els.changelogBtn = document.getElementById('changelogBtn');
+  els.changelogOverlay = document.getElementById('changelogOverlay');
+  els.changelogList = document.getElementById('changelogList');
+  els.changelogClose = document.getElementById('changelogClose');
 
   state = load();
   buildCards();
@@ -1247,6 +1337,15 @@ function init() {
     els.qrOverlay.hidden = false;
   });
   els.qrClose.addEventListener('click', function () { els.qrOverlay.hidden = true; });
+
+  initSeenVersion();
+  buildChangelog();
+  syncNewsMark();
+  els.changelogBtn.addEventListener('click', openChangelog);
+  els.changelogClose.addEventListener('click', function () { els.changelogOverlay.hidden = true; });
+  els.changelogOverlay.addEventListener('click', function (event) {
+    if (event.target === els.changelogOverlay) els.changelogOverlay.hidden = true;
+  });
   els.qrOverlay.addEventListener('click', function (event) {
     if (event.target === els.qrOverlay) els.qrOverlay.hidden = true;
   });

@@ -21,13 +21,19 @@
 <body>
 
 <header class="app-header">
-  <h1 class="app-title">Multitask Timer</h1>
+  <div class="app-brand">
+    <h1 class="app-title">Multitask Timer</h1>
+    <span id="appVersion" class="app-version"></span>
+  </div>
   <div class="total">
-    <span class="total-label">合計</span>
+    <span class="total-label" data-i18n="total">合計</span>
     <span id="total-time" class="total-time">00:00:00</span>
   </div>
-  <button id="stop-all" class="btn btn-stop" type="button">■ 全停止</button>
+  <button id="stop-all" class="btn btn-stop" type="button" data-i18n="stopAll">■ 全停止</button>
+  <button id="fullscreen-btn" class="btn btn-icon" type="button"
+          data-i18n-title="c.fullscreen" data-i18n-aria-label="c.fullscreen" title="全画面表示" aria-label="全画面表示">⛶</button>
   <button id="settings-btn" class="btn btn-icon" type="button"
+          data-i18n-title="c.settings" data-i18n-aria-label="c.settings"
           title="設定" aria-label="設定" aria-expanded="false">⚙</button>
 </header>
 
@@ -39,80 +45,81 @@
   <span id="target-total" class="target-total"></span>
 </footer>
 
-<!-- Global settings: task count, reset-all, and the usage notes. -->
+<!-- Settings sheet. The common rows (language, share, changelog, other apps,
+     clear data) are the same in every yukmmz.github.io app; app rows sit between. -->
 <div id="sheet-backdrop" class="backdrop" hidden></div>
 
-<section id="settings-panel" class="sheet" hidden aria-label="設定">
+<section id="settings-panel" class="sheet" hidden data-i18n-aria-label="c.settings" aria-label="設定">
   <div class="sheet-head">
-    <h2 class="sheet-title">設定</h2>
-    <button id="settings-close" class="btn btn-icon" type="button" aria-label="閉じる">✕</button>
+    <h2 class="sheet-title" data-i18n="c.settings">設定</h2>
+    <button id="settings-close" class="btn btn-icon" type="button"
+            data-i18n-aria-label="c.close" aria-label="閉じる">✕</button>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">タスク数</span>
-    <div class="stepper" role="group" aria-label="タスク数">
-      <button id="task-minus" class="btn btn-round" type="button" aria-label="タスクを減らす">−</button>
+    <span class="sheet-label" data-i18n="c.language">言語</span>
+    <select id="lang-select" class="sound-select" data-i18n-aria-label="c.language" aria-label="言語">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+    </select>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label" data-i18n="taskCount">タスク数</span>
+    <div class="stepper" role="group" data-i18n-aria-label="taskCount" aria-label="タスク数">
+      <button id="task-minus" class="btn btn-round" type="button" data-i18n-aria-label="taskMinus" aria-label="タスクを減らす">−</button>
       <span id="task-count-value" class="stepper-value" aria-live="polite">3</span>
-      <button id="task-plus" class="btn btn-round" type="button" aria-label="タスクを増やす">＋</button>
+      <button id="task-plus" class="btn btn-round" type="button" data-i18n-aria-label="taskPlus" aria-label="タスクを増やす">＋</button>
     </div>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">通知音</span>
-    <select id="sound-select" class="sound-select" aria-label="通知音の種類"></select>
+    <span class="sheet-label" data-i18n="sound">通知音</span>
+    <select id="sound-select" class="sound-select" data-i18n-aria-label="soundKind" aria-label="通知音の種類"></select>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">動作確認</span>
+    <span class="sheet-label" data-i18n="soundCheck">動作確認</span>
     <button id="test-sound" class="btn" type="button">音をテスト</button>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">自動停止<br><small>目安あり</small></span>
-    <select id="auto-stop-extra" class="sound-select" aria-label="目安時間があるタスクの自動停止"></select>
+    <span class="sheet-label" data-i18n-html="autoStopWithTarget">自動停止<br><small>目安あり</small></span>
+    <select id="auto-stop-extra" class="sound-select" data-i18n-aria-label="autoStopWithTargetAria" aria-label="目安時間があるタスクの自動停止"></select>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">自動停止<br><small>目安なし</small></span>
-    <select id="auto-stop-no-target" class="sound-select" aria-label="目安時間がないタスクの自動停止"></select>
+    <span class="sheet-label" data-i18n-html="autoStopNoTarget">自動停止<br><small>目安なし</small></span>
+    <select id="auto-stop-no-target" class="sound-select" data-i18n-aria-label="autoStopNoTargetAria" aria-label="目安時間がないタスクの自動停止"></select>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">共有</span>
-    <button id="qrBtn" class="btn" type="button">QR コードを表示</button>
+    <span class="sheet-label" data-i18n="measured">計測時間</span>
+    <button id="reset-all" class="btn btn-danger" type="button" data-i18n="resetAll">すべて 00:00:00 に戻す</button>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">更新履歴</span>
-    <button id="changelogBtn" class="btn" type="button">更新履歴を見る</button>
+    <span class="sheet-label" data-i18n="c.share">共有</span>
+    <button id="qrBtn" class="btn" type="button" data-i18n="c.showQr">QR コードを表示</button>
   </div>
 
   <div class="sheet-row">
-    <span class="sheet-label">計測時間</span>
-    <button id="reset-all" class="btn btn-danger" type="button">すべて 00:00:00 に戻す</button>
+    <span class="sheet-label" data-i18n="c.changelog">更新履歴</span>
+    <button id="changelogBtn" class="btn" type="button" data-i18n="c.showChangelog">表示</button>
   </div>
 
-  <div class="sheet-help">
-    <p><strong>使い方</strong></p>
-    <p>タスクの枠を押すと、そのタスクだけがカウントアップし、走っていた他のタスクは自動で停止します。
-       走っているタスクをもう一度押すと停止します。</p>
-    <p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。
-       設定ウィンドウは外側をタップすると閉じます。</p>
-    <p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。
-       音は最初に画面をどこか一度タップしてから有効になります。</p>
-    <p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>
-    <p>止め忘れの保険として、走り続けたタスクは<strong>自動停止</strong>します。
-       初期設定では、目安時間があるタスクは「目安 ＋ 2時間」、ないタスクは「5時間」で止まり、
-       記録される時間もそこで打ち切られます。長さは上の「自動停止」で変えられます（止めない設定も可）。</p>
-    <p>通知音は数種類から選べます。選ぶとその場で一度鳴ります。</p>
-    <p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後に通知音が鳴ります。
-       ここで鳴れば、目安時間の超過通知も同じように鳴ります。</p>
-    <p><strong>iPad / iPhone で音が鳴らないとき</strong>は、
-       <strong>設定 → サウンド → 消音モード を OFF</strong> にしてください
-       （音量を上げただけでは鳴らないことがあります）。</p>
-    <p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>Esc</kbd> 閉じる</p>
-    <p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>
-    <p class="note"><span id="appVersion"></span></p>
+  <div class="sheet-row">
+    <span class="sheet-label" data-i18n="c.otherApps">他のアプリ</span>
+    <a id="otherAppsLink" class="btn" href="https://yukmmz.github.io/" target="_blank" rel="noopener"
+       data-i18n="c.openPortal">アプリ一覧を開く</a>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label" data-i18n="c.data">データ</span>
+    <button id="clearDataBtn" class="btn btn-danger" type="button" data-i18n="c.clearData">保存データを消す</button>
+  </div>
+
+  <div class="sheet-help" data-i18n-html="help">
   </div>
 </section>
 
@@ -125,6 +132,7 @@
       <div class="card-top">
         <span class="task-name-text">タスク</span>
         <button class="btn btn-icon task-menu-btn" type="button"
+                data-i18n-title="taskMenu" data-i18n-aria-label="taskMenu"
                 title="このタスクの設定" aria-label="このタスクの設定" aria-expanded="false">⋯</button>
       </div>
 
@@ -137,34 +145,35 @@
 
     <div class="task-menu" hidden>
       <label class="menu-field">
-        <span class="menu-label">タスク名</span>
-        <input class="task-name" type="text" maxlength="24" placeholder="タスク名" aria-label="タスク名">
+        <span class="menu-label" data-i18n="taskName">タスク名</span>
+        <input class="task-name" type="text" maxlength="24" data-i18n-placeholder="taskName" data-i18n-aria-label="taskName"
+               placeholder="タスク名" aria-label="タスク名">
       </label>
 
       <div class="menu-field">
-        <span class="menu-label">目安時間</span>
+        <span class="menu-label" data-i18n="target">目安時間</span>
         <span class="menu-target">
           <input class="task-target-h" type="number" min="0" max="24" step="1"
-                 inputmode="numeric" placeholder="0" aria-label="目安時間（時間）">
-          <span class="menu-unit">時間</span>
+                 inputmode="numeric" placeholder="0" data-i18n-aria-label="targetHours" aria-label="目安時間（時間）">
+          <span class="menu-unit" data-i18n="unitHours">時間</span>
           <input class="task-target-m" type="number" min="0" max="59" step="1"
-                 inputmode="numeric" placeholder="0" aria-label="目安時間（分）">
-          <span class="menu-unit">分</span>
+                 inputmode="numeric" placeholder="0" data-i18n-aria-label="targetMinutes" aria-label="目安時間（分）">
+          <span class="menu-unit" data-i18n="unitMinutes">分</span>
         </span>
 
         <!-- Touch devices get these instead; see the pointer: coarse rules. -->
         <div class="wheel-row">
           <div class="wheel task-wheel-h" tabindex="0" role="listbox"
-               aria-label="目安時間（時間）"></div>
-          <span class="menu-unit">時間</span>
+               data-i18n-aria-label="targetHours" aria-label="目安時間（時間）"></div>
+          <span class="menu-unit" data-i18n="unitHours">時間</span>
           <div class="wheel task-wheel-m" tabindex="0" role="listbox"
-               aria-label="目安時間（分）"></div>
-          <span class="menu-unit">分</span>
+               data-i18n-aria-label="targetMinutes" aria-label="目安時間（分）"></div>
+          <span class="menu-unit" data-i18n="unitMinutes">分</span>
           <div class="wheel-band" aria-hidden="true"></div>
         </div>
       </div>
 
-      <button class="btn btn-danger task-reset" type="button">時間リセット</button>
+      <button class="btn btn-danger task-reset" type="button" data-i18n="taskReset">時間リセット</button>
     </div>
   </section>
 </template>
@@ -184,19 +193,20 @@
         <div class="qrurl" id="qrSrcUrl"></div>
       </div>
     </div>
-    <button id="qrClose" class="btn" type="button">閉じる</button>
+    <button id="qrClose" class="btn" type="button" data-i18n="c.close">閉じる</button>
   </div>
 </div>
 
 <!-- 更新履歴: 新しい順。中身は main.js の CHANGELOG から組み立てる -->
 <div id="changelogOverlay" hidden>
-  <div class="qrcard changelog-card" role="dialog" aria-label="更新履歴">
-    <h2 class="changelog-title">更新履歴</h2>
+  <div class="qrcard changelog-card" role="dialog" data-i18n-aria-label="c.changelog" aria-label="更新履歴">
+    <h2 class="changelog-title" data-i18n="c.changelog">更新履歴</h2>
     <div id="changelogList" class="changelog-list"></div>
-    <button id="changelogClose" class="btn" type="button">閉じる</button>
+    <button id="changelogClose" class="btn" type="button" data-i18n="c.close">閉じる</button>
   </div>
 </div>
 
+<script src="i18n.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

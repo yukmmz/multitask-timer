@@ -81,11 +81,28 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* App name + version: the same look in every yukmmz.github.io app. */
+.app-brand {
+  display: flex;
+  align-items: baseline;
+  gap: .45em;
+  white-space: nowrap;
+}
+
 .app-title {
-  font-size: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
   letter-spacing: .02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.app-version {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: .55;
   white-space: nowrap;
 }
 
@@ -742,6 +759,17 @@ kbd, .kbd-like {
 @media (max-width: 700px) {
   body { padding: 8px 10px 10px; }
   .tasks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
-  .app-title { font-size: .9rem; }
   .total-time { font-size: 1.25rem; }
 }
+
+/* ---------- common header / settings pieces (same in every app) ---------- */
+
+#fullscreen-btn { font-size: 1.5rem; }
+#fullscreen-btn[hidden] { display: none; }
+
+/* The version next to the app name opens the changelog. */
+#appVersion { cursor: pointer; }
+#appVersion:hover { text-decoration: underline; }
+
+/* A link styled as a button (「アプリ一覧を開く」). */
+a.btn { text-decoration: none; display: inline-block; }

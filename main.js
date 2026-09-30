@@ -19,39 +19,147 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.4.0';
+var APP_VERSION = '1.5.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
-/* What changed, newest first, shown from the settings sheet. Bumping
- * APP_VERSION means adding an entry here: the test checks that the first
- * entry matches APP_VERSION. Written for users, so in Japanese. */
+/* What changed, newest first, shown from the settings sheet and from the
+ * version next to the app name. Bumping APP_VERSION means adding an entry
+ * here: the test checks that the first entry matches APP_VERSION. Written for
+ * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.5.0', date: '2026-10-01', items: [
+    { ja: 'アプリ名の横にバージョンを表示するようにしました。押すと更新履歴が開きます',
+      en: 'The version is shown next to the app name; tap it to open this changelog' },
+    { ja: '日本語 / English を設定（⚙）で切り替えられるようにしました',
+      en: 'Switch between Japanese and English in the settings (⚙)' },
+    { ja: '設定に「他のアプリ」と「保存データを消す」を追加しました',
+      en: 'Added "Other apps" and "Clear saved data" to the settings' },
+    { ja: '全画面表示ボタン（⛶）を追加しました',
+      en: 'Added a full-screen button (⛶)' }
+  ] },
   { version: '1.4.0', date: '2026-09-30', items: [
-    '設定（⚙）から更新履歴を見られるようにしました。新しい版を初めて開いたときは ⚙ に印が付きます'
+    { ja: '設定（⚙）から更新履歴を見られるようにしました。新しい版を初めて開いたときは ⚙ に印が付きます',
+      en: 'The changelog can be opened from the settings (⚙); a dot on ⚙ marks a new version' }
   ] },
   { version: '1.3.0', date: '2026-09-30', items: [
-    '止め忘れたタスクを自動停止するようにしました（目安あり: 目安＋2時間、目安なし: 5時間。⚙ で変更可）',
-    '画面オフ中は表示の更新を止め、電池の消費を抑えるようにしました'
+    { ja: '止め忘れたタスクを自動停止するようにしました（目安あり: 目安＋2時間、目安なし: 5時間。⚙ で変更可）',
+      en: 'Tasks left running stop automatically (target + 2 h, or 5 h without a target; changeable in ⚙)' },
+    { ja: '画面オフ中は表示の更新を止め、電池の消費を抑えるようにしました',
+      en: 'The display stops updating while the screen is off, to save battery' }
   ] },
   { version: '1.2.1', date: '2026-09-08', items: [
-    '最初のタップで通知音が鳴ってしまう問題を修正しました'
+    { ja: '最初のタップで通知音が鳴ってしまう問題を修正しました',
+      en: 'Fixed the alert sound playing on the first tap' }
   ] },
   { version: '1.2.0', date: '2026-09-08', items: [
-    '分のホイールが 59→0 でつながるようにしました',
-    'ホイールをはじいたとき、途中で止まらないようにしました'
+    { ja: '分のホイールが 59→0 でつながるようにしました',
+      en: 'The minute wheel now wraps from 59 to 0' },
+    { ja: 'ホイールをはじいたとき、途中で止まらないようにしました',
+      en: 'Flicking a wheel no longer stops short' }
   ] },
   { version: '1.1.1', date: '2026-09-08', items: [
-    'ホイールの見た目を調整しました'
+    { ja: 'ホイールの見た目を調整しました', en: 'Polished the look of the wheels' }
   ] },
   { version: '1.1.0', date: '2026-09-08', items: [
-    'iPad / スマートフォンでは、目安時間をホイールで選べるようにしました'
+    { ja: 'iPad / スマートフォンでは、目安時間をホイールで選べるようにしました',
+      en: 'On iPad and phones, the target time is picked with wheels' }
   ] },
   { version: '1.0.0', date: '2026-09-03', items: [
-    '最初の公開版: タスク別の排他ストップウォッチ、目安時間と超過通知',
-    '通知音 12 種類と音のテスト、QR コードでの共有'
+    { ja: '最初の公開版: タスク別の排他ストップウォッチ、目安時間と超過通知',
+      en: 'First release: exclusive per-task stopwatches, target times and overrun alerts' },
+    { ja: '通知音 12 種類と音のテスト、QR コードでの共有',
+      en: '12 alert sounds with a sound test, and sharing by QR code' }
   ] }
 ];
+
+/* UI strings. `c.*` keys are the common ones every yukmmz.github.io app uses
+ * with the same wording; the rest belong to this app. */
+var STRINGS = {
+  ja: {
+    'c.settings': '設定', 'c.close': '閉じる', 'c.language': '言語', 'c.share': '共有',
+    'c.showQr': 'QR コードを表示', 'c.changelog': '更新履歴', 'c.showChangelog': '表示',
+    'c.otherApps': '他のアプリ', 'c.openPortal': 'アプリ一覧を開く', 'c.data': 'データ',
+    'c.clearData': '保存データを消す', 'c.fullscreen': '全画面表示',
+    'c.clearConfirm': 'このブラウザに保存されている、このアプリのデータ（計測記録・タスク名・設定）をすべて消して初期状態に戻します。\n元に戻せません。よろしいですか？',
+    total: '合計', stopAll: '■ 全停止', taskCount: 'タスク数', taskMinus: 'タスクを減らす',
+    taskPlus: 'タスクを増やす', sound: '通知音', soundKind: '通知音の種類', soundCheck: '動作確認',
+    soundTest: '音をテスト', soundTestIn: '{n} 秒後に鳴らします…', soundTestAsk: '鳴りましたか？',
+    autoStopWithTarget: '自動停止<br><small>目安あり</small>', autoStopNoTarget: '自動停止<br><small>目安なし</small>',
+    autoStopWithTargetAria: '目安時間があるタスクの自動停止', autoStopNoTargetAria: '目安時間がないタスクの自動停止',
+    autoStopOff: '自動停止しない', autoStopPlus: '目安 ＋ {d}',
+    measured: '計測時間', resetAll: 'すべて 00:00:00 に戻す',
+    resetAllConfirm: 'すべてのタスクの計測時間を 00:00:00 に戻しますか？\n（タスク名と目安時間は残ります）',
+    taskMenu: 'このタスクの設定', taskName: 'タスク名', target: '目安時間',
+    targetHours: '目安時間（時間）', targetMinutes: '目安時間（分）', unitHours: '時間', unitMinutes: '分',
+    taskReset: '時間リセット', taskDefault: 'タスク {x}', untitled: '（無題）',
+    targetView: '目安 {d}', over: '超過 +{t}', autoStopped: '自動停止しました', autoStoppedSuffix: '（自動停止）',
+    targetTotal: '目安合計 {d}', durHM: '{h}時間{m}分', durH: '{h}時間', durM: '{m}分',
+    removeConfirm: '「{name}」には {t} の記録があります。削除しますか？',
+    taskResetConfirm: '「{name}」の時間を 00:00:00 に戻しますか？',
+    help:
+      '<p><strong>使い方</strong></p>' +
+      '<p>タスクの枠を押すと、そのタスクだけがカウントアップし、走っていた他のタスクは自動で停止します。' +
+      '走っているタスクをもう一度押すと停止します。</p>' +
+      '<p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。' +
+      '設定ウィンドウは外側をタップすると閉じます。</p>' +
+      '<p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。' +
+      '音は最初に画面をどこか一度タップしてから有効になります。</p>' +
+      '<p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>' +
+      '<p>止め忘れの保険として、走り続けたタスクは<strong>自動停止</strong>します。' +
+      '初期設定では、目安時間があるタスクは「目安 ＋ 2時間」、ないタスクは「5時間」で止まり、' +
+      '記録される時間もそこで打ち切られます。長さは上の「自動停止」で変えられます（止めない設定も可）。</p>' +
+      '<p>通知音は数種類から選べます。選ぶとその場で一度鳴ります。</p>' +
+      '<p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後に通知音が鳴ります。' +
+      'ここで鳴れば、目安時間の超過通知も同じように鳴ります。</p>' +
+      '<p><strong>iPad / iPhone で音が鳴らないとき</strong>は、' +
+      '<strong>設定 → サウンド → 消音モード を OFF</strong> にしてください' +
+      '（音量を上げただけでは鳴らないことがあります）。</p>' +
+      '<p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>Esc</kbd> 閉じる</p>' +
+      '<p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>'
+  },
+  en: {
+    'c.settings': 'Settings', 'c.close': 'Close', 'c.language': 'Language', 'c.share': 'Share',
+    'c.showQr': 'Show QR codes', 'c.changelog': 'Changelog', 'c.showChangelog': 'Show',
+    'c.otherApps': 'Other apps', 'c.openPortal': 'Open app list', 'c.data': 'Data',
+    'c.clearData': 'Clear saved data', 'c.fullscreen': 'Full screen',
+    'c.clearConfirm': 'This deletes everything this app has saved in this browser (records, task names, settings) and starts over.\nThis cannot be undone. Continue?',
+    total: 'Total', stopAll: '■ Stop all', taskCount: 'Tasks', taskMinus: 'Remove a task',
+    taskPlus: 'Add a task', sound: 'Alert sound', soundKind: 'Alert sound', soundCheck: 'Check',
+    soundTest: 'Test sound', soundTestIn: 'Playing in {n} s…', soundTestAsk: 'Did you hear it?',
+    autoStopWithTarget: 'Auto-stop<br><small>with target</small>', autoStopNoTarget: 'Auto-stop<br><small>no target</small>',
+    autoStopWithTargetAria: 'Auto-stop for tasks with a target', autoStopNoTargetAria: 'Auto-stop for tasks without a target',
+    autoStopOff: 'Never', autoStopPlus: 'Target + {d}',
+    measured: 'Times', resetAll: 'Reset all to 00:00:00',
+    resetAllConfirm: 'Reset every task to 00:00:00?\n(Task names and targets are kept.)',
+    taskMenu: 'Task settings', taskName: 'Task name', target: 'Target',
+    targetHours: 'Target (hours)', targetMinutes: 'Target (minutes)', unitHours: 'h', unitMinutes: 'min',
+    taskReset: 'Reset time', taskDefault: 'Task {x}', untitled: '(untitled)',
+    targetView: 'Target {d}', over: 'Over +{t}', autoStopped: 'Auto-stopped', autoStoppedSuffix: ' (auto-stopped)',
+    targetTotal: 'Total target {d}', durHM: '{h} h {m} min', durH: '{h} h', durM: '{m} min',
+    removeConfirm: '"{name}" has {t} recorded. Remove it?',
+    taskResetConfirm: 'Reset "{name}" to 00:00:00?',
+    help:
+      '<p><strong>How to use</strong></p>' +
+      '<p>Tap a task\'s card to start it; whichever task was running stops. Tap the running task again to stop it.</p>' +
+      '<p>Each card\'s <span class="kbd-like">⋯</span> menu sets the task name, a target time, and resets that task. ' +
+      'Tap outside a panel to close it.</p>' +
+      '<p>Past its target, a task\'s time turns <strong class="sample-over">bold red</strong> and an alert sounds. ' +
+      'Sound works after the first tap anywhere on the page.</p>' +
+      '<p>Targets are typed on a computer and picked with wheels on iPad and phones.</p>' +
+      '<p>As a safety net, a task left running <strong>stops automatically</strong>: at target + 2 h, or after 5 h ' +
+      'without a target, and the recorded time is cut there. Change or turn this off under "Auto-stop" above.</p>' +
+      '<p>Several alert sounds are available; picking one plays it once.</p>' +
+      '<p><span class="kbd-like">Test sound</span> plays the alert a few seconds later. ' +
+      'If you hear it, overrun alerts will sound too.</p>' +
+      '<p><strong>No sound on iPad / iPhone?</strong> Turn <strong>Settings → Sounds → Silent Mode OFF</strong> ' +
+      '(raising the volume alone may not help).</p>' +
+      '<p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>6</kbd> switch task / <kbd>Space</kbd> stop all / <kbd>Esc</kbd> close</p>' +
+      '<p class="note">Records are stored only in this browser (localStorage) and never sent to a server.</p>'
+  }
+};
+var LANG_KEY = 'multitask-timer/lang';
+function t(key, params) { return I18N.t(key, params); }
 var SEEN_VERSION_KEY = 'multitask-timer/seen-version';
 
 var STORAGE_KEY = 'multitask-timer/v1';
@@ -84,7 +192,7 @@ var cards = [];
 function makeTask(index) {
   return {
     id: nextTaskId++,
-    name: 'タスク ' + (NAME_LETTERS[index] || String(index + 1)),
+    name: t('taskDefault', { x: NAME_LETTERS[index] || String(index + 1) }),
     accumulatedMs: 0,
     targetMin: null,   // null = no target time (the default)
     notified: false,   // beeped once for the current overrun
@@ -229,8 +337,7 @@ function removeTask() {
   if (state.tasks.length <= MIN_TASKS) return;
   var last = state.tasks[state.tasks.length - 1];
   var hasTime = elapsedOf(last) > 0;
-  if (hasTime && !window.confirm('「' + last.name + '」には ' + formatDuration(elapsedOf(last)) +
-                                 ' の記録があります。削除しますか？')) {
+  if (hasTime && !window.confirm(t('removeConfirm', { name: last.name, t: formatDuration(elapsedOf(last)) }))) {
     return;
   }
   if (state.runningId === last.id) {
@@ -310,7 +417,7 @@ function load() {
     }
     tasks.push({
       id: nextTaskId++,
-      name: typeof t.name === 'string' && t.name.length ? t.name.slice(0, 24) : 'タスク ' + (NAME_LETTERS[i] || (i + 1)),
+      name: typeof t.name === 'string' && t.name.length ? t.name.slice(0, 24) : t('taskDefault', { x: NAME_LETTERS[i] || String(i + 1) }),
       accumulatedMs: acc,
       targetMin: target,
       notified: t.notified === true,
@@ -359,18 +466,18 @@ function formatDuration(ms) {
 function formatTargetLabel(min) {
   var h = Math.floor(min / 60);
   var m = min % 60;
-  if (h > 0 && m > 0) return h + '時間' + m + '分';
-  if (h > 0) return h + '時間';
-  return m + '分';
+  if (h > 0 && m > 0) return t('durHM', { h: h, m: m });
+  if (h > 0) return t('durH', { h: h });
+  return t('durM', { m: m });
 }
 
 /** Labels for the auto-stop selects. */
 function autoStopExtraLabel(min) {
-  return min === null ? '自動停止しない' : '目安 ＋ ' + formatTargetLabel(min);
+  return min === null ? t('autoStopOff') : t('autoStopPlus', { d: formatTargetLabel(min) });
 }
 
 function autoStopNoTargetLabel(min) {
-  return min === null ? '自動停止しない' : formatTargetLabel(min);
+  return min === null ? t('autoStopOff') : formatTargetLabel(min);
 }
 
 /* ------------------------------------------------------------------- audio */
@@ -506,6 +613,7 @@ var SOUNDS = [
   {
     id: 'chime',
     name: 'チャイム（3音）',
+    nameEn: 'Chime (3 notes)',
     build: function (rate) {
       return toneArpeggio(rate, [toneStruck(rate, 523, 1.2, 0.22, 4.5, P_SOFT),
                                  toneStruck(rate, 659, 1.2, 0.22, 4.5, P_SOFT),
@@ -515,6 +623,7 @@ var SOUNDS = [
   {
     id: 'musicbox',
     name: 'オルゴール（3音）',
+    nameEn: 'Music box (3 notes)',
     build: function (rate) {
       return toneArpeggio(rate, [toneStruck(rate, 1047, 1.6, 0.16, 3, P_MUSICBOX),
                                  toneStruck(rate, 1319, 1.6, 0.16, 3, P_MUSICBOX),
@@ -524,6 +633,7 @@ var SOUNDS = [
   {
     id: 'glocken',
     name: 'グロッケン（2音）',
+    nameEn: 'Glockenspiel (2 notes)',
     build: function (rate) {
       return toneArpeggio(rate, [toneStruck(rate, 1047, 0.9, 0.18, 5, P_GLASS),
                                  toneStruck(rate, 1568, 1.1, 0.18, 4.5, P_GLASS)], 0.11);
@@ -532,6 +642,7 @@ var SOUNDS = [
   {
     id: 'harp',
     name: 'ハープ（4音）',
+    nameEn: 'Harp (4 notes)',
     build: function (rate) {
       return toneArpeggio(rate, [toneStruck(rate, 523, 1.4, 0.16, 4, P_SOFT),
                                  toneStruck(rate, 659, 1.4, 0.16, 4, P_SOFT),
@@ -542,6 +653,7 @@ var SOUNDS = [
   {
     id: 'bell',
     name: 'ベル（1音）',
+    nameEn: 'Bell (1 note)',
     build: function (rate) {
       return toneJoin([toneSilence(rate, LEAD_MS / 1000),
                        toneStruck(rate, 587, 1.6, 0.26, 3.2, P_BELL)]);
@@ -550,6 +662,7 @@ var SOUNDS = [
   {
     id: 'marimba',
     name: '木琴（2音）',
+    nameEn: 'Xylophone (2 notes)',
     build: function (rate) {
       return toneArpeggio(rate, [toneStruck(rate, 523, 0.7, 0.3, 7, P_WOOD),
                                  toneStruck(rate, 784, 0.9, 0.3, 6, P_WOOD)], 0.16);
@@ -558,6 +671,7 @@ var SOUNDS = [
   {
     id: 'chord',
     name: '和音ひとつ',
+    nameEn: 'Single chord',
     build: function (rate) {
       return toneArpeggio(rate, [toneStruck(rate, 392, 1.6, 0.16, 3.5, P_SOFT),
                                  toneStruck(rate, 494, 1.6, 0.16, 3.5, P_SOFT),
@@ -567,6 +681,7 @@ var SOUNDS = [
   {
     id: 'soft',
     name: 'ポーン（控えめ）',
+    nameEn: 'Pong (soft)',
     build: function (rate) {
       return toneJoin([toneSilence(rate, LEAD_MS / 1000),
                        toneStruck(rate, 523, 1.0, 0.18, 5, [[1, 1], [2, 0.15]])]);
@@ -575,6 +690,7 @@ var SOUNDS = [
   {
     id: 'pad',
     name: 'ふわっとパッド',
+    nameEn: 'Soft pad',
     build: function (rate) {
       return toneJoin([toneSilence(rate, LEAD_MS / 1000),
                        tonePad(rate, [392, 494, 587], 1.4, 0.24)]);
@@ -583,6 +699,7 @@ var SOUNDS = [
   {
     id: 'knock',
     name: 'ノック（2回）',
+    nameEn: 'Knock (twice)',
     build: function (rate) {
       return toneJoin([toneSilence(rate, LEAD_MS / 1000),
                        toneStruck(rate, 320, 0.3, 0.3, 20, P_KNOCK),
@@ -593,6 +710,7 @@ var SOUNDS = [
   {
     id: 'blip',
     name: 'ピロン（2回）',
+    nameEn: 'Blip (twice)',
     build: function (rate) {
       return toneJoin([toneSilence(rate, LEAD_MS / 1000),
                        toneSweep(rate, 440, 900, 0.28, 0.22, 5),
@@ -603,6 +721,7 @@ var SOUNDS = [
   {
     id: 'beep',
     name: 'ビープ（3回・目立つ）',
+    nameEn: 'Beep (3 times, loud)',
     build: function (rate) {
       return toneJoin([toneSilence(rate, LEAD_MS / 1000),
                        toneFlat(rate, 880, 0.22, 0.35), toneSilence(rate, 0.09),
@@ -731,21 +850,21 @@ function runSoundTest() {
 
   var left = TEST_DELAY_S;
   els.testSound.disabled = true;
-  els.testSound.textContent = left + ' 秒後に鳴らします…';
+  els.testSound.textContent = t('soundTestIn', { n: left });
 
   soundTestTimer = window.setInterval(function () {
     left--;
     if (left > 0) {
-      els.testSound.textContent = left + ' 秒後に鳴らします…';
+      els.testSound.textContent = t('soundTestIn', { n: left });
       return;
     }
     window.clearInterval(soundTestTimer);
     soundTestTimer = null;
     beep();
     els.testSound.disabled = false;
-    els.testSound.textContent = '鳴りましたか？';
+    els.testSound.textContent = t('soundTestAsk');
     window.setTimeout(function () {
-      if (soundTestTimer === null) els.testSound.textContent = '音をテスト';
+      if (soundTestTimer === null) els.testSound.textContent = t('soundTest');
     }, 5000);
   }, 1000);
 }
@@ -924,6 +1043,7 @@ function buildCards() {
   }
 
   if (els.tasks.style) els.tasks.style.setProperty('--cols', String(state.tasks.length));
+  I18N.apply(els.tasks);
 }
 
 /** Fill the menu's hour/minute fields from the task (blank means zero). */
@@ -1059,7 +1179,7 @@ function bindCard(card, task, index) {
   card.reset.addEventListener('click', function (event) {
     event.stopPropagation();
     if (elapsedOf(task) > 0 &&
-        !window.confirm('「' + task.name + '」の時間を 00:00:00 に戻しますか？')) {
+        !window.confirm(t('taskResetConfirm', { name: task.name }))) {
       return;
     }
     resetTask(task);
@@ -1084,7 +1204,7 @@ function render() {
       card.lastTime = text;
     }
 
-    var name = task.name || '（無題）';
+    var name = task.name || t('untitled');
     if (name !== card.lastName) {
       card.nameText.textContent = name;
       card.lastName = name;
@@ -1114,14 +1234,14 @@ function render() {
       card.lastIsOver = isOver;
     }
 
-    var targetView = task.targetMin === null ? '' : '目安 ' + formatTargetLabel(task.targetMin);
+    var targetView = task.targetMin === null ? '' : t('targetView', { d: formatTargetLabel(task.targetMin) });
     if (targetView !== card.lastTargetView) {
       card.targetView.textContent = targetView;
       card.lastTargetView = targetView;
     }
 
-    var overText = isOver ? '超過 +' + formatDuration(ms - targetMs) : '';
-    if (task.autoStopped && !isRunning) overText = overText ? overText + '（自動停止）' : '自動停止しました';
+    var overText = isOver ? t('over', { t: formatDuration(ms - targetMs) }) : '';
+    if (task.autoStopped && !isRunning) overText = overText ? overText + t('autoStoppedSuffix') : t('autoStopped');
     if (overText !== card.lastOver) {
       card.over.textContent = overText;
       card.lastOver = overText;
@@ -1131,7 +1251,7 @@ function render() {
   els.totalTime.textContent = formatDuration(totalElapsed());
 
   var targetSum = totalTargetMin();
-  var targetSumText = targetSum > 0 ? '目安合計 ' + formatTargetLabel(targetSum) : '';
+  var targetSumText = targetSum > 0 ? t('targetTotal', { d: formatTargetLabel(targetSum) }) : '';
   if (targetSumText !== lastTargetTotal) {
     els.targetTotal.textContent = targetSumText;
     lastTargetTotal = targetSumText;
@@ -1211,12 +1331,13 @@ function buildChangelog() {
     section.className = 'changelog-entry';
     var head = document.createElement('h3');
     head.className = 'changelog-version';
-    head.textContent = 'v' + entry.version + '（' + entry.date + '）';
+    head.textContent = 'v' + entry.version + ' (' + entry.date + ')';
     section.appendChild(head);
     var list = document.createElement('ul');
     for (var j = 0; j < entry.items.length; j++) {
       var li = document.createElement('li');
-      li.textContent = entry.items[j];
+      var item = entry.items[j];
+      li.textContent = item[I18N.lang()] || item.ja;
       list.appendChild(li);
     }
     section.appendChild(list);
@@ -1233,6 +1354,68 @@ function openChangelog() {
 }
 
 /* -------------------------------------------------------------------- init */
+
+/* ------------------------------------------------ common header / settings */
+
+/** ⛶ toggles full screen. Hidden where the browser cannot do it (iPhone). */
+function fullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+
+function toggleFullscreen() {
+  var root = document.documentElement;
+  if (fullscreenElement()) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    var req = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (req) {
+      var p = req.call(root);
+      if (p && typeof p['catch'] === 'function') p['catch'](function () { /* ignore */ });
+    }
+  }
+}
+
+function initFullscreen() {
+  var root = document.documentElement;
+  var supported = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+  els.fullscreenBtn.hidden = !supported;
+  els.fullscreenBtn.addEventListener('click', toggleFullscreen);
+}
+
+/** Delete everything this app keeps in the browser and start over. */
+function clearSavedData() {
+  if (!window.confirm(t('c.clearConfirm'))) return;
+  [STORAGE_KEY, SEEN_VERSION_KEY, LANG_KEY].forEach(function (key) {
+    try { window.localStorage.removeItem(key); } catch (e) { /* ignore */ }
+  });
+  window.location.reload();
+}
+
+/** Text that is built in JS rather than marked up with data-i18n. */
+function applyLanguage() {
+  els.langSelect.value = I18N.lang();
+  I18N.apply(els.tasks);   // cards are cloned from a <template>, outside document.apply's reach
+  for (var s = 0; s < SOUNDS.length; s++) {
+    els.soundSelect.options[s].textContent = soundName(SOUNDS[s]);
+  }
+  relabelSelect(els.autoStopExtra, AUTO_STOP_EXTRA_CHOICES, autoStopExtraLabel);
+  relabelSelect(els.autoStopNoTarget, AUTO_STOP_NO_TARGET_CHOICES, autoStopNoTargetLabel);
+  if (soundTestTimer === null) els.testSound.textContent = t('soundTest');
+  buildChangelog();
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].lastName = cards[i].lastTargetView = cards[i].lastOver = '';
+  }
+  lastTargetTotal = '';
+  render();
+}
+
+function soundName(sound) {
+  return I18N.lang() === 'en' && sound.nameEn ? sound.nameEn : sound.name;
+}
+
+function relabelSelect(select, choices, label) {
+  for (var i = 0; i < choices.length; i++) select.options[i].textContent = label(choices[i]);
+}
 
 /** Fill an auto-stop <select> and write the choice to `state[key]`.
  *  Option values are strings, so "off" (null) is stored as the value "off". */
@@ -1305,6 +1488,12 @@ function init() {
   els.changelogOverlay = document.getElementById('changelogOverlay');
   els.changelogList = document.getElementById('changelogList');
   els.changelogClose = document.getElementById('changelogClose');
+  els.langSelect = document.getElementById('lang-select');
+  els.fullscreenBtn = document.getElementById('fullscreen-btn');
+  els.clearDataBtn = document.getElementById('clearDataBtn');
+
+  // Before anything is built: default task names and labels use the language.
+  I18N.init(LANG_KEY, STRINGS);
 
   state = load();
   buildCards();
@@ -1325,7 +1514,8 @@ function init() {
   els.settingsClose.addEventListener('click', function () { setSettingsOpen(false); });
   els.testSound.addEventListener('click', runSoundTest);
 
-  els.appVersion.textContent = 'Multitask Timer v' + APP_VERSION;
+  els.appVersion.textContent = 'v' + APP_VERSION;
+  els.appVersion.addEventListener('click', openChangelog);
 
   // The QR images encode these strings; print the same constants so the two
   // cannot drift apart when one of them is edited.
@@ -1353,7 +1543,7 @@ function init() {
   for (var s = 0; s < SOUNDS.length; s++) {
     var option = document.createElement('option');
     option.value = SOUNDS[s].id;
-    option.textContent = SOUNDS[s].name;
+    option.textContent = soundName(SOUNDS[s]);
     els.soundSelect.appendChild(option);
   }
   els.soundSelect.value = state.soundId;
@@ -1369,11 +1559,18 @@ function init() {
 
   els.resetAll.addEventListener('click', function () {
     if (totalElapsed() > 0 &&
-        !window.confirm('すべてのタスクの計測時間を 00:00:00 に戻しますか？\n（タスク名と目安時間は残ります）')) {
+        !window.confirm(t('resetAllConfirm'))) {
       return;
     }
     resetAllTimes();
   });
+
+  initFullscreen();
+  els.clearDataBtn.addEventListener('click', clearSavedData);
+  els.langSelect.value = I18N.lang();
+  els.langSelect.addEventListener('change', function () { I18N.set(els.langSelect.value); });
+  I18N.onChange(applyLanguage);
+  applyLanguage();
 
   els.taskPlus.addEventListener('click', function () { unlockAudio(); addTask(); });
   els.taskMinus.addEventListener('click', function () { unlockAudio(); removeTask(); });

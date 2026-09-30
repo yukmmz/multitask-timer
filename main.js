@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.2.1';
+var APP_VERSION = '1.3.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
@@ -29,6 +29,17 @@ var MAX_TASKS = 6;
 var DEFAULT_TASKS = 3;
 var TICK_MS = 200;
 var NAME_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+/* Auto-stop: a safety net for a task left running by mistake (e.g. an iPad put
+ * to sleep mid-task). Values are minutes; null means "never stop".
+ *   with a target:    stop at target + AUTO_STOP_EXTRA
+ *   without a target: stop at AUTO_STOP_NO_TARGET
+ * The limit is on the task's total elapsed time, and the recorded time is cut
+ * at the limit even when the stop is only noticed later (page asleep/closed). */
+var DEFAULT_AUTO_STOP_EXTRA_MIN = 120;
+var DEFAULT_AUTO_STOP_NO_TARGET_MIN = 300;
+var AUTO_STOP_EXTRA_CHOICES = [30, 60, 120, 180, 240, 360, 480, 720, null];
+var AUTO_STOP_NO_TARGET_CHOICES = [60, 120, 180, 240, 300, 360, 480, 600, 720, 1440, null];
 
 /* ------------------------------------------------------------------ state */
 
@@ -45,14 +56,19 @@ function makeTask(index) {
     name: 'タスク ' + (NAME_LETTERS[index] || String(index + 1)),
     accumulatedMs: 0,
     targetMin: null,   // null = no target time (the default)
-    notified: false    // beeped once for the current overrun
+    notified: false,   // beeped once for the current overrun
+    autoStopped: false // the last run was ended by auto-stop, not by the user
   };
 }
 
 function defaultState() {
   var tasks = [];
   for (var i = 0; i < DEFAULT_TASKS; i++) tasks.push(makeTask(i));
-  return { tasks: tasks, runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID };
+  return {
+    tasks: tasks, runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID,
+    autoStopExtraMin: DEFAULT_AUTO_STOP_EXTRA_MIN,
+    autoStopNoTargetMin: DEFAULT_AUTO_STOP_NO_TARGET_MIN
+  };
 }
 
 function elapsedOf(task) {
@@ -85,6 +101,39 @@ function findTask(id) {
   return null;
 }
 
+/**
+ * Elapsed time (ms) at which the running task is auto-stopped, or null.
+ * `task.accumulatedMs` is the time banked before the current run. A run that
+ * starts already past the limit (the user restarted it on purpose) gets a fresh
+ * allowance of the no-target length, so it is still covered by the safety net.
+ */
+function autoStopLimitMs(task) {
+  var limitMin = task.targetMin !== null
+    ? (state.autoStopExtraMin === null ? null : task.targetMin + state.autoStopExtraMin)
+    : state.autoStopNoTargetMin;
+  if (limitMin === null) return null;
+  var limitMs = limitMin * 60000;
+  if (task.accumulatedMs < limitMs) return limitMs;
+  if (state.autoStopNoTargetMin === null) return null;
+  return task.accumulatedMs + state.autoStopNoTargetMin * 60000;
+}
+
+/** Stop the running task if it has reached its limit, banking exactly the limit
+ *  (not the wall-clock time since, which may include hours of sleep). */
+function checkAutoStop() {
+  if (state.runningId === null || state.startedAt === null) return false;
+  var task = findTask(state.runningId);
+  if (!task) return false;
+  var limitMs = autoStopLimitMs(task);
+  if (limitMs === null || elapsedOf(task) < limitMs) return false;
+  task.accumulatedMs = limitMs;
+  task.autoStopped = true;
+  state.runningId = null;
+  state.startedAt = null;
+  save();
+  return true;
+}
+
 /* -------------------------------------------------------------- transitions */
 
 /** Fold the running task's live time into its accumulator and stop everything. */
@@ -107,6 +156,8 @@ function toggleTask(id) {
     stopAll();
   } else {
     stopAll();
+    var task = findTask(id);
+    if (task) task.autoStopped = false;
     state.runningId = id;
     state.startedAt = Date.now();
     save();
@@ -118,6 +169,7 @@ function resetTask(task) {
   if (state.runningId === task.id) stopAll();
   task.accumulatedMs = 0;
   task.notified = false;
+  task.autoStopped = false;
   save();
   render();
 }
@@ -128,6 +180,7 @@ function resetAllTimes() {
   for (var i = 0; i < state.tasks.length; i++) {
     state.tasks[i].accumulatedMs = 0;
     state.tasks[i].notified = false;
+    state.tasks[i].autoStopped = false;
   }
   save();
   render();
@@ -179,12 +232,20 @@ function clampInt(value, lo, hi, fallback) {
   return n;
 }
 
+/** A stored auto-stop setting if it is one of `choices`, else the default.
+ *  A missing key (data saved before auto-stop existed) gets the default too. */
+function loadChoice(value, choices, fallback) {
+  if (value === undefined) return fallback;
+  return choices.indexOf(value) >= 0 ? value : fallback;
+}
+
 /**
  * Restore. A task that was running when the page went away KEEPS running:
  * `startedAt` is an absolute timestamp, so the time spent while the tab was
  * closed or discarded is counted. That is deliberate — iPad Safari drops
  * background tabs while the user is still working, and an accidental reload
- * should not silently stop the measurement.
+ * should not silently stop the measurement. Auto-stop still applies: the first
+ * render after restoring cuts a run that passed its limit while away.
  */
 function load() {
   var raw;
@@ -221,7 +282,8 @@ function load() {
       name: typeof t.name === 'string' && t.name.length ? t.name.slice(0, 24) : 'タスク ' + (NAME_LETTERS[i] || (i + 1)),
       accumulatedMs: acc,
       targetMin: target,
-      notified: t.notified === true
+      notified: t.notified === true,
+      autoStopped: t.autoStopped === true
     });
   }
 
@@ -229,7 +291,11 @@ function load() {
     tasks: tasks,
     runningId: null,
     startedAt: null,
-    soundId: findSound(parsed.soundId).id
+    soundId: findSound(parsed.soundId).id,
+    autoStopExtraMin: loadChoice(parsed.autoStopExtraMin, AUTO_STOP_EXTRA_CHOICES,
+                                 DEFAULT_AUTO_STOP_EXTRA_MIN),
+    autoStopNoTargetMin: loadChoice(parsed.autoStopNoTargetMin, AUTO_STOP_NO_TARGET_CHOICES,
+                                    DEFAULT_AUTO_STOP_NO_TARGET_MIN)
   };
 
   // The stored id space is not the fresh one, so map by position.
@@ -265,6 +331,15 @@ function formatTargetLabel(min) {
   if (h > 0 && m > 0) return h + '時間' + m + '分';
   if (h > 0) return h + '時間';
   return m + '分';
+}
+
+/** Labels for the auto-stop selects. */
+function autoStopExtraLabel(min) {
+  return min === null ? '自動停止しない' : '目安 ＋ ' + formatTargetLabel(min);
+}
+
+function autoStopNoTargetLabel(min) {
+  return min === null ? '自動停止しない' : formatTargetLabel(min);
 }
 
 /* ------------------------------------------------------------------- audio */
@@ -963,6 +1038,7 @@ function bindCard(card, task, index) {
 }
 
 function render() {
+  checkAutoStop();
   var running = state.runningId !== null;
 
   for (var i = 0; i < state.tasks.length; i++) {
@@ -1014,6 +1090,7 @@ function render() {
     }
 
     var overText = isOver ? '超過 +' + formatDuration(ms - targetMs) : '';
+    if (task.autoStopped && !isRunning) overText = overText ? overText + '（自動停止）' : '自動停止しました';
     if (overText !== card.lastOver) {
       card.over.textContent = overText;
       card.lastOver = overText;
@@ -1029,6 +1106,7 @@ function render() {
     lastTargetTotal = targetSumText;
   }
 
+  syncTicker(running);
   els.stopAll.disabled = !running;
   els.taskCountValue.textContent = String(state.tasks.length);
   els.taskMinus.disabled = state.tasks.length <= MIN_TASKS;
@@ -1039,6 +1117,23 @@ function render() {
 
 var lastTitle = '';
 var lastTargetTotal = '';
+
+/* The repaint loop runs only while a task is running AND the page is visible.
+ * Timing never depends on it (see the header), so stopping it loses nothing,
+ * and a page that iOS keeps alive with the screen off does no work at all.
+ * Every state change and every return to the page calls render(), which
+ * restarts it when needed. */
+var tickTimer = null;
+
+function syncTicker(running) {
+  var want = running && document.visibilityState !== 'hidden';
+  if (want && tickTimer === null) {
+    tickTimer = window.setInterval(render, TICK_MS);
+  } else if (!want && tickTimer !== null) {
+    window.clearInterval(tickTimer);
+    tickTimer = null;
+  }
+}
 
 function updateTitle(running) {
   var title = 'Multitask Timer';
@@ -1053,6 +1148,23 @@ function updateTitle(running) {
 }
 
 /* -------------------------------------------------------------------- init */
+
+/** Fill an auto-stop <select> and write the choice to `state[key]`.
+ *  Option values are strings, so "off" (null) is stored as the value "off". */
+function bindAutoStopSelect(select, choices, label, key) {
+  for (var i = 0; i < choices.length; i++) {
+    var option = document.createElement('option');
+    option.value = choices[i] === null ? 'off' : String(choices[i]);
+    option.textContent = label(choices[i]);
+    select.appendChild(option);
+  }
+  select.value = state[key] === null ? 'off' : String(state[key]);
+  select.addEventListener('change', function () {
+    state[key] = select.value === 'off' ? null : parseInt(select.value, 10);
+    save();
+    render();
+  });
+}
 
 function onKeyDown(event) {
   var tag = event.target && event.target.tagName;
@@ -1101,6 +1213,8 @@ function init() {
   els.qrUrl = document.getElementById('qrUrl');
   els.qrSrcUrl = document.getElementById('qrSrcUrl');
   els.backdrop = document.getElementById('sheet-backdrop');
+  els.autoStopExtra = document.getElementById('auto-stop-extra');
+  els.autoStopNoTarget = document.getElementById('auto-stop-no-target');
 
   state = load();
   buildCards();
@@ -1147,6 +1261,11 @@ function init() {
   els.soundSelect.addEventListener('change', function () {
     setSound(els.soundSelect.value);
   });
+
+  bindAutoStopSelect(els.autoStopExtra, AUTO_STOP_EXTRA_CHOICES, autoStopExtraLabel,
+                     'autoStopExtraMin');
+  bindAutoStopSelect(els.autoStopNoTarget, AUTO_STOP_NO_TARGET_CHOICES, autoStopNoTargetLabel,
+                     'autoStopNoTargetMin');
   els.backdrop.addEventListener('click', closeOverlays);
 
   els.resetAll.addEventListener('click', function () {
@@ -1164,13 +1283,12 @@ function init() {
   // Unlock audio on the very first gesture anywhere, so the first overrun beeps.
   document.addEventListener('pointerdown', unlockAudio, { once: true });
 
-  window.addEventListener('pagehide', save);
+  window.addEventListener('pagehide', function () { save(); syncTicker(false); });
+  window.addEventListener('pageshow', render);
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') save();
+    if (document.visibilityState === 'hidden') { save(); syncTicker(false); }
     else render();
   });
-
-  window.setInterval(render, TICK_MS);
 }
 
 if (document.readyState === 'loading') {

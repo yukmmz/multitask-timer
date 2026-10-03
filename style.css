@@ -704,6 +704,26 @@ kbd, .kbd-like {
 
 #changelogOverlay[hidden] { display: none; }
 
+#helpOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 24, 40, .45);
+}
+
+#helpOverlay[hidden] { display: none; }
+
+.help-body { font-size: .9rem; line-height: 1.6; }
+.help-body p { margin: 6px 0; }
+.help-body .note, .help-body .hint { font-size: .8rem; color: var(--muted); }
+
+#helpClose { margin-top: 12px; align-self: center; }
+
+#help-btn { font-size: 1.35rem; font-weight: 700; }
+
 .changelog-card {
   width: min(520px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
@@ -764,8 +784,19 @@ kbd, .kbd-like {
 
 /* ---------- common header / settings pieces (same in every app) ---------- */
 
-#fullscreen-btn { font-size: 1.5rem; }
 #fullscreen-btn[hidden] { display: none; }
+.fs-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#fullscreen-btn .fs-exit,
+#fullscreen-btn.is-fullscreen .fs-enter { display: none; }
+#fullscreen-btn.is-fullscreen .fs-exit { display: block; }
 
 /* The version next to the app name opens the changelog. */
 #appVersion { cursor: pointer; }

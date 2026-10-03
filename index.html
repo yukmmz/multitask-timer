@@ -13,6 +13,7 @@
 <meta property="og:description" content="Per-task stopwatches for parallel work: exactly one task runs at a time.">
 <meta property="og:url" content="https://yukmmz.github.io/multitask-timer/">
 <meta property="og:image" content="https://yukmmz.github.io/multitask-timer/icon-192.png">
+<meta name="twitter:card" content="summary">
 <title>Multitask Timer</title>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -30,8 +31,13 @@
     <span id="total-time" class="total-time">00:00:00</span>
   </div>
   <button id="stop-all" class="btn btn-stop" type="button" data-i18n="stopAll">■ 全停止</button>
-  <button id="fullscreen-btn" class="btn btn-icon" type="button"
-          data-i18n-title="c.fullscreen" data-i18n-aria-label="c.fullscreen" title="全画面表示" aria-label="全画面表示">⛶</button>
+  <!-- Label and icon follow the state in syncFullscreenBtn(): corners out = expand, corners in = shrink -->
+  <button id="fullscreen-btn" class="btn btn-icon" type="button" title="全画面表示" aria-label="全画面表示">
+    <svg class="fs-icon fs-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+    <svg class="fs-icon fs-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M20 15h-5v5M4 15h5v5"/></svg>
+  </button>
+  <button id="help-btn" class="btn btn-icon" type="button"
+          data-i18n-title="c.help" data-i18n-aria-label="c.help" title="使い方" aria-label="使い方">?</button>
   <button id="settings-btn" class="btn btn-icon" type="button"
           data-i18n-title="c.settings" data-i18n-aria-label="c.settings"
           title="設定" aria-label="設定" aria-expanded="false">⚙</button>
@@ -53,7 +59,7 @@
   <div class="sheet-head">
     <h2 class="sheet-title" data-i18n="c.settings">設定</h2>
     <button id="settings-close" class="btn btn-icon" type="button"
-            data-i18n-aria-label="c.close" aria-label="閉じる">✕</button>
+            data-i18n-aria-label="c.close" data-i18n-title="c.close" aria-label="閉じる" title="閉じる">✕</button>
   </div>
 
   <div class="sheet-row">
@@ -67,9 +73,9 @@
   <div class="sheet-row">
     <span class="sheet-label" data-i18n="taskCount">タスク数</span>
     <div class="stepper" role="group" data-i18n-aria-label="taskCount" aria-label="タスク数">
-      <button id="task-minus" class="btn btn-round" type="button" data-i18n-aria-label="taskMinus" aria-label="タスクを減らす">−</button>
+      <button id="task-minus" class="btn btn-round" type="button" data-i18n-aria-label="taskMinus" data-i18n-title="taskMinus" aria-label="タスクを減らす" title="タスクを減らす">−</button>
       <span id="task-count-value" class="stepper-value" aria-live="polite">3</span>
-      <button id="task-plus" class="btn btn-round" type="button" data-i18n-aria-label="taskPlus" aria-label="タスクを増やす">＋</button>
+      <button id="task-plus" class="btn btn-round" type="button" data-i18n-aria-label="taskPlus" data-i18n-title="taskPlus" aria-label="タスクを増やす" title="タスクを増やす">＋</button>
     </div>
   </div>
 
@@ -117,9 +123,6 @@
   <div class="sheet-row">
     <span class="sheet-label" data-i18n="c.data">データ</span>
     <button id="clearDataBtn" class="btn btn-danger" type="button" data-i18n="c.clearData">保存データを消す</button>
-  </div>
-
-  <div class="sheet-help" data-i18n-html="help">
   </div>
 </section>
 
@@ -203,6 +206,15 @@
     <h2 class="changelog-title" data-i18n="c.changelog">更新履歴</h2>
     <div id="changelogList" class="changelog-list"></div>
     <button id="changelogClose" class="btn" type="button" data-i18n="c.close">閉じる</button>
+  </div>
+</div>
+
+<!-- 使い方: ヘッダーの ? または ? キーで開く -->
+<div id="helpOverlay" hidden>
+  <div class="qrcard changelog-card help-card" role="dialog" data-i18n-aria-label="c.help" aria-label="使い方">
+    <h2 class="changelog-title" data-i18n="c.help">使い方</h2>
+    <div class="changelog-list help-body" data-i18n-html="help"></div>
+    <button id="helpClose" class="btn" type="button" data-i18n="c.close">閉じる</button>
   </div>
 </div>
 

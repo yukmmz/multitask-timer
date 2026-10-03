@@ -1,126 +1,150 @@
 # Multitask Timer
 
-複数のタスクを同時並行で進めるときに、**どのタスクに何分使ったか**をタスクごとのストップウォッチで
-計測するための Web アプリです。
+*English / [日本語](README_ja.md)*
 
-**公開URL: https://yukmmz.github.io/multitask-timer/**
+**Open the app: https://yukmmz.github.io/multitask-timer/**
 
-ブラウザだけで動きます。インストール不要・サーバー通信なし。
+A web app that measures **how many minutes you spent on each task** when you work on several tasks in parallel,
+with one stopwatch per task.
+
+It runs entirely in the browser. Nothing to install, no server communication.
 
 ---
 
-## 使い方
+## Features
 
-1. 作業を始めるタスクの **枠のどこか**を押すと、そのタスクだけがカウントアップします
-   （初期状態は「タスク A」「タスク B」「タスク C」の3つ）。
-2. 別のタスクに移るときは、移り先の**枠を押すだけ**です。
-   走っていたタスクは自動で止まり、移り先は**前回止まったところから**再開します。
-3. 手を止めるときは、動いているタスクの枠をもう一度押すか、ヘッダーの **「■ 全停止」** を押します。
+- One stopwatch per task (1 to 6 tasks); **exactly one runs at a time**, switching is one tap
+- Optional target time per task, with a red display and a sound when exceeded
+- Auto-stop as a safety net for forgetting to stop
+- Total time of all tasks, Japanese / English, works on PC and iPad
 
-**常に「全部止まっている」か「ちょうど1つだけ動いている」のどちらか**です。
-2つのタスクが同時に動くことはありません。
+---
 
-### タスクごとの設定（枠の右上の ⋯）
+## How to use
 
-各タスクの枠の右上にある **⋯** から、そのタスクだけの設定ができます。
-設定ウィンドウは、**外側をタップ**するか <kbd>Esc</kbd> で閉じます。
+1. Tap **anywhere on the card** of the task you start; only that task counts up
+   (by default there are three: "Task A", "Task B", "Task C").
+2. To switch to another task, **just tap its card**.
+   The running task stops automatically, and the new one resumes **from where it last stopped**.
+3. To pause, tap the running task's card again, or press **"■ Stop all"** in the header.
 
-- **タスク名**の変更
-- **目安時間**（「◯時間 ◯分」で指定）
-- **そのタスクの時間だけリセット**
+**It is always either "everything stopped" or "exactly one task running".**
+Two tasks never run at the same time.
 
-### 全体の設定（ヘッダーの ⚙）
+### Per-task settings (⋯ at the top right of a card)
 
-ヘッダー右の **⚙** から、アプリ全体の設定と使い方の説明を開けます。
+The **⋯** at the top right of each card opens settings for that task only.
+Close the settings window by **tapping outside it** or with <kbd>Esc</kbd>.
 
-- **タスク数** … `−` / `＋` で **1〜6個**（初期値は3個）。記録の残っているタスクを削除しようとしたときは確認が入ります。
-- **自動停止** … 止め忘れの保険です。走り続けたタスクを自動で止めます（下記）。
-- **更新履歴を見る** … バージョンごとの変更点を新しい順に表示します。新しい版を初めて開いたときは ⚙ に赤い印が付き、履歴を開くと消えます。
-- **計測時間をすべて 00:00:00 に戻す** … 全タスクの時間をリセットします（タスク名と目安時間は残ります）。
+- Change the **task name**
+- **Target time** (set as "◯ h ◯ min")
+- **Reset only this task's time**
 
-### 自動停止（止め忘れの保険）
+### How to use window (? in the header)
 
-タスクを動かしたまま iPad を閉じた、などの止め忘れに備えて、経過時間が一定に達したタスクは自動で停止します。
+The **?** button just left of ⚙ (or the <kbd>?</kbd> key) opens the instructions.
+Close it with "Close", by tapping outside it, or with <kbd>Esc</kbd>.
 
-| タスク | 初期設定 | 選べる長さ |
+### Overall settings (⚙ in the header)
+
+The **⚙** at the right of the header opens the app-wide settings.
+
+- **Language** … Japanese / English.
+- **Tasks** … `−` / `＋` sets **1 to 6** tasks (3 by default). Removing a task that has recorded time asks for confirmation.
+- **Alert sound** … the overrun sound and a "Test sound" button.
+- **Auto-stop** … a safety net for forgetting to stop. It stops a task that keeps running (see below).
+- **Reset all times to 00:00:00** … resets every task's time (task names and target times are kept).
+- **Share** … QR codes for the app and its source.
+- **Changelog** … shows the changes per version, newest first. The first time you open a new version, ⚙ gets a red dot, which disappears once you open the changelog. Tapping the version next to the app name opens it too.
+- **Other apps** … opens the list of apps.
+- **Clear saved data** … erases everything this app saved in the browser and starts over.
+
+### Auto-stop (a safety net for forgetting to stop)
+
+In case you forget to stop — for example, you close the iPad with a task still running — a task stops automatically once its elapsed time reaches a limit.
+
+| Task | Default | Choices |
 |---|---|---|
-| 目安時間あり | 目安 ＋ 2時間 | 目安 ＋ 30分〜12時間／止めない |
-| 目安時間なし | 5時間 | 1〜24時間／止めない |
+| With a target time | target + 2 h | target + 30 min to 12 h / never |
+| Without a target time | 5 h | 1 to 24 h / never |
 
-- 記録される時間は **停止した時点（上限）で打ち切られます**。画面を閉じていて後から気づいた場合も、上限を超えた分は加算されません。
-- 自動停止したタスクには `自動停止しました` と表示されます。もう一度押せば続きから再開できます
-  （上限を超えてから再開した場合は、そこから「目安なし」の長さでまた自動停止します）。
+- The recorded time is **cut off at the moment it stops (the limit)**. Even if the screen was closed and you notice later, time beyond the limit is not added.
+- A task that stopped automatically shows `Stopped automatically`. Tap it again to resume where it left off
+  (if you resume after passing the limit, it auto-stops again after the "no target" length).
 
-### 目安時間と警告
+### Target time and warnings
 
-各タスクに **目安時間** を「◯時間 ◯分」で任意に設定できます（初期状態はなし）。
-パソコンでは数値を入力し、**iPad / スマートフォンでは指でスクロールして選びます**（iPhone のアラームと同じ操作感）。
-設定すると、経過時間の下に `目安 1時間30分` のように小さく表示されます。
+You can optionally set a **target time** for each task as "◯ h ◯ min" (none by default).
+On a computer you type the numbers; **on iPad / smartphones you pick them by scrolling with your finger** (the same feel as the iPhone alarm).
+Once set, it appears in small text under the elapsed time, like `Target 1 h 30 min`.
 
-目安を設定したタスクがあると、画面の下に **`目安合計 1時間30分`** のように合計が小さく表示されます
-（目安を設定していないタスクは加算されません）。
+If any task has a target, the **sum of the targets** appears in small text at the bottom of the screen, like **`Total target 1 h 30 min`**
+(tasks without a target are not added).
 
-経過時間が目安を超えると、
+When the elapsed time passes the target:
 
-- 経過時間の表示が **赤い太字** になる（**カウントアップは止まりません**）
-- **音（ビープ3回）でお知らせ**する（1回の超過につき1度だけ鳴ります）
-- 超過分が `超過 +00:05:12` のように表示される
+- the elapsed time turns **red and bold** (**it keeps counting up**)
+- **a sound (three beeps) alerts you** (once per overrun)
+- the overrun is shown, like `Over +00:05:12`
 
-⚙ の **「音をテスト」** を押すと数秒後にビープが鳴ります。ここで鳴れば超過通知も鳴ります。
-（押した瞬間ではなく数秒後に鳴らすのは、超過通知と同じ「操作を伴わない再生」を再現するためです）
+Pressing **"Test sound"** in ⚙ plays the beep a few seconds later. If you hear it, overrun alerts will sound too.
+(It plays a few seconds later, not right when you press, to reproduce the same "playback without a user action" as an overrun alert.)
 
-> **音が鳴らないとき（iPad / iPhone）**
+> **No sound (iPad / iPhone)?**
 >
-> 1. **設定 → サウンド → 消音モード を OFF** にする。音量を最大にしても、消音モードが ON だと鳴らないことがあります。
-> 2. ページを開いたあと、**一度どこかをタップ**する。ブラウザは最初の操作があるまで音を鳴らしません（タスクを1回押せば十分です）。
-> 3. 他のアプリで音を再生していないか、Bluetooth スピーカー／イヤホンに繋がっていないか確認する。
+> 1. Turn **Settings → Sounds → Silent Mode OFF**. Even at full volume, it may not sound while Silent Mode is ON.
+> 2. After opening the page, **tap somewhere once**. Browsers do not play sound until the first interaction (tapping a task once is enough).
+> 3. Check that no other app is playing sound and that you are not connected to Bluetooth speakers / earphones.
 
-### 合計時間
+### Total time
 
-ヘッダーの「合計」に、**全タスクの総経過時間**が常に表示されます。
+"Total" in the header always shows **the total elapsed time of all tasks**.
 
-### キーボードショートカット（PC）
+### Keyboard shortcuts (PC)
 
-| キー | 動作 |
+| Key | Action |
 |---|---|
-| <kbd>1</kbd>〜<kbd>6</kbd> | そのタスクを開始（動作中なら停止） |
-| <kbd>Space</kbd> | 全停止 |
-| <kbd>Esc</kbd> | 開いている設定を閉じる |
+| <kbd>1</kbd>–<kbd>6</kbd> | Start that task (stop it if running) |
+| <kbd>Space</kbd> | Stop all |
+| <kbd>?</kbd> | Open "How to use" |
+| <kbd>Esc</kbd> | Close the open window |
 
 ---
 
-## データの保存について
-
-- タスク名・目安時間・経過時間・稼働中かどうかは、**お使いのブラウザの localStorage にのみ**保存されます。
-  サーバーへは一切送信されません。
-- タブを閉じたりリロードしても、次に開いたときに続きから使えます。
-- **タスクを動かしたままタブを閉じた場合、そのタスクは動き続けた扱いになります**
-  （閉じていた間の時間も加算されます。ただし自動停止の上限までです）。中断するときは先に停止してください。
-- ブラウザの履歴／サイトデータを消すと記録も消えます。
-- プライベートブラウズでは保存されない場合があります。
-
----
-
-## 動作環境
-
-- デスクトップの Google Chrome / Edge / Safari / Firefox
-- iPad / iPhone の Safari
-
-ビルド不要の静的サイトです（`index.html` + `style.css` + `main.js` の3ファイル、外部ライブラリなし）。
-
----
-
-## ローカルで動かす
+## Run locally
 
 ```sh
 git clone https://github.com/yukmmz/multitask-timer.git
 cd multitask-timer
 python3 -m http.server 8000
-# ブラウザで http://localhost:8000 を開く
+# open http://localhost:8000 in your browser
 ```
+
+Tests: `node tests/test_core.js` (from the repository root).
 
 ---
 
-## ライセンス
+## Saved data
 
-MIT
+- Task names, target times, elapsed times and which task is running are saved **only in your browser's localStorage**.
+  Nothing is ever sent to a server.
+- After closing the tab or reloading, you can pick up where you left off the next time you open it.
+- **If you close the tab while a task is running, that task is treated as having kept running**
+  (the time while it was closed is added, up to the auto-stop limit). Stop it first if you are taking a break.
+- To erase everything, use **⚙ → Clear saved data**. Clearing the browser's history / site data also clears the records.
+- In private browsing, data may not be saved.
+
+---
+
+## Supported environments
+
+- Google Chrome / Edge / Safari / Firefox on desktop
+- Safari on iPad / iPhone
+
+A static site with no build step (`index.html` + `style.css` + `main.js` + `i18n.js`, no external libraries).
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

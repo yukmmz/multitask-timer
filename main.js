@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.5.0';
+var APP_VERSION = '1.6.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 
@@ -28,6 +28,12 @@ var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
  * here: the test checks that the first entry matches APP_VERSION. Written for
  * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.6.0', date: '2026-10-01', items: [
+    { ja: '使い方を、設定の中からヘッダーの「?」ボタン（? キーでも開く）に移しました',
+      en: '"How to use" moved from the settings to the "?" button in the header (or press ?)' },
+    { ja: '全画面表示中は、全画面ボタンが「縮小」の形に変わるようにしました',
+      en: 'While in full screen, the full-screen button changes to a "shrink" icon' }
+  ] },
   { version: '1.5.0', date: '2026-10-01', items: [
     { ja: 'アプリ名の横にバージョンを表示するようにしました。押すと更新履歴が開きます',
       en: 'The version is shown next to the app name; tap it to open this changelog' },
@@ -80,7 +86,7 @@ var STRINGS = {
     'c.settings': '設定', 'c.close': '閉じる', 'c.language': '言語', 'c.share': '共有',
     'c.showQr': 'QR コードを表示', 'c.changelog': '更新履歴', 'c.showChangelog': '表示',
     'c.otherApps': '他のアプリ', 'c.openPortal': 'アプリ一覧を開く', 'c.data': 'データ',
-    'c.clearData': '保存データを消す', 'c.fullscreen': '全画面表示',
+    'c.clearData': '保存データを消す', 'c.fullscreen': '全画面表示', 'c.exitFullscreen': '全画面を終了', 'c.help': '使い方',
     'c.clearConfirm': 'このブラウザに保存されている、このアプリのデータ（計測記録・タスク名・設定）をすべて消して初期状態に戻します。\n元に戻せません。よろしいですか？',
     total: '合計', stopAll: '■ 全停止', taskCount: 'タスク数', taskMinus: 'タスクを減らす',
     taskPlus: 'タスクを増やす', sound: '通知音', soundKind: '通知音の種類', soundCheck: '動作確認',
@@ -98,7 +104,6 @@ var STRINGS = {
     removeConfirm: '「{name}」には {t} の記録があります。削除しますか？',
     taskResetConfirm: '「{name}」の時間を 00:00:00 に戻しますか？',
     help:
-      '<p><strong>使い方</strong></p>' +
       '<p>タスクの枠を押すと、そのタスクだけがカウントアップし、走っていた他のタスクは自動で停止します。' +
       '走っているタスクをもう一度押すと停止します。</p>' +
       '<p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。' +
@@ -108,21 +113,21 @@ var STRINGS = {
       '<p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>' +
       '<p>止め忘れの保険として、走り続けたタスクは<strong>自動停止</strong>します。' +
       '初期設定では、目安時間があるタスクは「目安 ＋ 2時間」、ないタスクは「5時間」で止まり、' +
-      '記録される時間もそこで打ち切られます。長さは上の「自動停止」で変えられます（止めない設定も可）。</p>' +
+      '記録される時間もそこで打ち切られます。長さは設定（⚙）の「自動停止」で変えられます（止めない設定も可）。</p>' +
       '<p>通知音は数種類から選べます。選ぶとその場で一度鳴ります。</p>' +
-      '<p>上の <span class="kbd-like">音をテスト</span> を押すと数秒後に通知音が鳴ります。' +
+      '<p>設定（⚙）の <span class="kbd-like">音をテスト</span> を押すと数秒後に通知音が鳴ります。' +
       'ここで鳴れば、目安時間の超過通知も同じように鳴ります。</p>' +
       '<p><strong>iPad / iPhone で音が鳴らないとき</strong>は、' +
       '<strong>設定 → サウンド → 消音モード を OFF</strong> にしてください' +
       '（音量を上げただけでは鳴らないことがあります）。</p>' +
-      '<p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>Esc</kbd> 閉じる</p>' +
+      '<p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>?</kbd> 使い方 / <kbd>Esc</kbd> 閉じる</p>' +
       '<p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>'
   },
   en: {
     'c.settings': 'Settings', 'c.close': 'Close', 'c.language': 'Language', 'c.share': 'Share',
     'c.showQr': 'Show QR codes', 'c.changelog': 'Changelog', 'c.showChangelog': 'Show',
     'c.otherApps': 'Other apps', 'c.openPortal': 'Open app list', 'c.data': 'Data',
-    'c.clearData': 'Clear saved data', 'c.fullscreen': 'Full screen',
+    'c.clearData': 'Clear saved data', 'c.fullscreen': 'Full screen', 'c.exitFullscreen': 'Exit full screen', 'c.help': 'How to use',
     'c.clearConfirm': 'This deletes everything this app has saved in this browser (records, task names, settings) and starts over.\nThis cannot be undone. Continue?',
     total: 'Total', stopAll: '■ Stop all', taskCount: 'Tasks', taskMinus: 'Remove a task',
     taskPlus: 'Add a task', sound: 'Alert sound', soundKind: 'Alert sound', soundCheck: 'Check',
@@ -140,7 +145,6 @@ var STRINGS = {
     removeConfirm: '"{name}" has {t} recorded. Remove it?',
     taskResetConfirm: 'Reset "{name}" to 00:00:00?',
     help:
-      '<p><strong>How to use</strong></p>' +
       '<p>Tap a task\'s card to start it; whichever task was running stops. Tap the running task again to stop it.</p>' +
       '<p>Each card\'s <span class="kbd-like">⋯</span> menu sets the task name, a target time, and resets that task. ' +
       'Tap outside a panel to close it.</p>' +
@@ -148,13 +152,13 @@ var STRINGS = {
       'Sound works after the first tap anywhere on the page.</p>' +
       '<p>Targets are typed on a computer and picked with wheels on iPad and phones.</p>' +
       '<p>As a safety net, a task left running <strong>stops automatically</strong>: at target + 2 h, or after 5 h ' +
-      'without a target, and the recorded time is cut there. Change or turn this off under "Auto-stop" above.</p>' +
+      'without a target, and the recorded time is cut there. Change or turn this off under "Auto-stop" in the settings (⚙).</p>' +
       '<p>Several alert sounds are available; picking one plays it once.</p>' +
-      '<p><span class="kbd-like">Test sound</span> plays the alert a few seconds later. ' +
+      '<p><span class="kbd-like">Test sound</span> in the settings (⚙) plays the alert a few seconds later. ' +
       'If you hear it, overrun alerts will sound too.</p>' +
       '<p><strong>No sound on iPad / iPhone?</strong> Turn <strong>Settings → Sounds → Silent Mode OFF</strong> ' +
       '(raising the volume alone may not help).</p>' +
-      '<p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>6</kbd> switch task / <kbd>Space</kbd> stop all / <kbd>Esc</kbd> close</p>' +
+      '<p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>6</kbd> switch task / <kbd>Space</kbd> stop all / <kbd>?</kbd> how to use / <kbd>Esc</kbd> close</p>' +
       '<p class="note">Records are stored only in this browser (localStorage) and never sent to a server.</p>'
   }
 };
@@ -1375,11 +1379,31 @@ function toggleFullscreen() {
   }
 }
 
+/** Swap the icon and label so the button shows what a press will do
+ * (expand when windowed, shrink while full screen). Also runs when the user
+ * leaves full screen with Esc, which never touches the button. */
+function syncFullscreenBtn() {
+  var on = !!fullscreenElement();
+  var label = t(on ? 'c.exitFullscreen' : 'c.fullscreen');
+  els.fullscreenBtn.classList.toggle('is-fullscreen', on);
+  els.fullscreenBtn.title = label;
+  els.fullscreenBtn.setAttribute('aria-label', label);
+}
+
 function initFullscreen() {
   var root = document.documentElement;
   var supported = !!(root.requestFullscreen || root.webkitRequestFullscreen);
   els.fullscreenBtn.hidden = !supported;
   els.fullscreenBtn.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', syncFullscreenBtn);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenBtn);
+  syncFullscreenBtn();
+}
+
+/** The "How to use" window, opened by the header ? button or the ? key. */
+function openHelp() {
+  closeOverlays();
+  els.helpOverlay.hidden = false;
 }
 
 /** Delete everything this app keeps in the browser and start over. */
@@ -1401,6 +1425,7 @@ function applyLanguage() {
   relabelSelect(els.autoStopExtra, AUTO_STOP_EXTRA_CHOICES, autoStopExtraLabel);
   relabelSelect(els.autoStopNoTarget, AUTO_STOP_NO_TARGET_CHOICES, autoStopNoTargetLabel);
   if (soundTestTimer === null) els.testSound.textContent = t('soundTest');
+  syncFullscreenBtn();
   buildChangelog();
   for (var i = 0; i < cards.length; i++) {
     cards[i].lastName = cards[i].lastTargetView = cards[i].lastOver = '';
@@ -1442,7 +1467,14 @@ function onKeyDown(event) {
   if (event.key === 'Escape') {
     if (els.qrOverlay) els.qrOverlay.hidden = true;
     if (els.changelogOverlay) els.changelogOverlay.hidden = true;
+    if (els.helpOverlay) els.helpOverlay.hidden = true;
     closeOverlays();
+    return;
+  }
+  if (event.key === '?') {
+    if (tag === 'SELECT') return;   // a focused dropdown (e.g. language) keeps its own keys
+    event.preventDefault();
+    openHelp();
     return;
   }
   if (event.key === ' ' || event.key === 'Spacebar') {
@@ -1491,6 +1523,9 @@ function init() {
   els.langSelect = document.getElementById('lang-select');
   els.fullscreenBtn = document.getElementById('fullscreen-btn');
   els.clearDataBtn = document.getElementById('clearDataBtn');
+  els.helpBtn = document.getElementById('help-btn');
+  els.helpOverlay = document.getElementById('helpOverlay');
+  els.helpClose = document.getElementById('helpClose');
 
   // Before anything is built: default task names and labels use the language.
   I18N.init(LANG_KEY, STRINGS);
@@ -1565,6 +1600,11 @@ function init() {
     resetAllTimes();
   });
 
+  els.helpBtn.addEventListener('click', openHelp);
+  els.helpClose.addEventListener('click', function () { els.helpOverlay.hidden = true; });
+  els.helpOverlay.addEventListener('click', function (event) {
+    if (event.target === els.helpOverlay) els.helpOverlay.hidden = true;
+  });
   initFullscreen();
   els.clearDataBtn.addEventListener('click', clearSavedData);
   els.langSelect.value = I18N.lang();

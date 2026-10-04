@@ -570,7 +570,7 @@ ctxI.__els['lang-select'].handlers.change[0]();
 check('switched to English', ctxI.I18N.lang() === 'en');
 check('en duration', ctxI.formatTargetLabel(90) === '1 h 30 min', ctxI.formatTargetLabel(90));
 check('<html lang> follows', ctxI.__doc.documentElement.lang === 'en', ctxI.__doc.documentElement.lang);
-check('changelog rebuilt in English', /send feedback or a bug report/.test(
+check('changelog rebuilt in English', /thinner and a little smaller/.test(
   ctxI.__els.changelogList.children[0].children[1].children[0].textContent));
 check('sound names in English', ctxI.__els['sound-select'].children[0].textContent === 'Chime (3 notes)',
   ctxI.__els['sound-select'].children[0].textContent);

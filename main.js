@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.7.0';
+var APP_VERSION = '1.7.1';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 /* Shared feedback endpoint (Google Apps Script web app, one for every yukmmz.github.io app).
@@ -32,6 +32,10 @@ var APP_ID = 'multitask-timer';
  * here: the test checks that the first entry matches APP_VERSION. Written for
  * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.7.1', date: '2026-10-04', items: [
+    { ja: '「FB」ボタンの文字を細く、少し小さくしました',
+      en: 'The "FB" button\'s letters are now thinner and a little smaller' }
+  ] },
   { version: '1.7.0', date: '2026-10-04', items: [
     { ja: 'ヘッダーに「FB」ボタンを追加しました。ご意見・不具合の報告を開発者に送れます',
       en: 'New "FB" button in the header: send feedback or a bug report to the developer' },

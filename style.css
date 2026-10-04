@@ -739,8 +739,8 @@ kbd, .kbd-like {
 /* "FB" packed edge to edge inside the 36x36 key: bold, squeezed sideways, no extra spacing. */
 #feedback-btn .fb-mark {
   display: inline-block;
-  font-size: 1.8rem;
-  font-weight: 640;
+  font-size: 1.44rem;
+  font-weight: 384;
   letter-spacing: -.05em;
   line-height: 1;
   transform: scaleX(.74);

@@ -17,6 +17,8 @@ It runs entirely in the browser. Nothing to install, no server communication.
 - Optional target time per task, with a red display and a sound when exceeded
 - Auto-stop as a safety net for forgetting to stop
 - Total time of all tasks, Japanese / English, works on PC and iPad
+- Reorder tasks: press and hold a card, then drag it (the other cards make room as you move)
+- **FB** button in the header: send feedback or a bug report to the developer
 
 ---
 
@@ -133,6 +135,7 @@ Tests: `node tests/test_core.js` (from the repository root).
   (the time while it was closed is added, up to the auto-stop limit). Stop it first if you are taking a break.
 - To erase everything, use **⚙ → Clear saved data**. Clearing the browser's history / site data also clears the records.
 - In private browsing, data may not be saved.
+- The only thing ever sent anywhere is what you write in the **FB** window, and only when you press Send (together with the app name, version and display language).
 
 ---
 

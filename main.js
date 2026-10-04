@@ -19,15 +19,25 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.6.0';
+var APP_VERSION = '1.7.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
+/* Shared feedback endpoint (Google Apps Script web app, one for every yukmmz.github.io app).
+ * Public on purpose: it can only append a row to a sheet and post to a Discord channel. */
+var FEEDBACK_URL = 'https://script.google.com/macros/s/AKfycbxFJ-rTK2e5h05r6_j0RJJu-1Fo4Or3nsAnYcnGXC2i9I8FEdOIbNaXI1BfjunkQHEP/exec';
+var APP_ID = 'multitask-timer';
 
 /* What changed, newest first, shown from the settings sheet and from the
  * version next to the app name. Bumping APP_VERSION means adding an entry
  * here: the test checks that the first entry matches APP_VERSION. Written for
  * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.7.0', date: '2026-10-04', items: [
+    { ja: 'ヘッダーに「FB」ボタンを追加しました。ご意見・不具合の報告を開発者に送れます',
+      en: 'New "FB" button in the header: send feedback or a bug report to the developer' },
+    { ja: 'タスクの枠を長押ししてから動かすと、並び順を変えられるようにしました（色もタスクと一緒に動きます）',
+      en: 'Press and hold a task\'s card, then drag it to change the order (its colour moves with it)' }
+  ] },
   { version: '1.6.0', date: '2026-10-01', items: [
     { ja: '使い方を、設定の中からヘッダーの「?」ボタン（? キーでも開く）に移しました',
       en: '"How to use" moved from the settings to the "?" button in the header (or press ?)' },
@@ -87,6 +97,12 @@ var STRINGS = {
     'c.showQr': 'QR コードを表示', 'c.changelog': '更新履歴', 'c.showChangelog': '表示',
     'c.otherApps': '他のアプリ', 'c.openPortal': 'アプリ一覧を開く', 'c.data': 'データ',
     'c.clearData': '保存データを消す', 'c.fullscreen': '全画面表示', 'c.exitFullscreen': '全画面を終了', 'c.help': '使い方',
+    'c.feedback': 'フィードバックを送る', 'c.feedbackLead': 'ご意見・ご要望・不具合の報告をお寄せください。',
+    'c.feedbackMessage': 'フィードバックの内容', 'c.feedbackPlaceholder': '使ってみた感想、困ったこと、ほしい機能など',
+    'c.feedbackContact': '連絡先（任意・返信がほしい場合）',
+    'c.feedbackNote': '送信を押したときに、書いた内容とアプリ名・バージョン・表示言語だけを開発者に送ります。',
+    'c.feedbackSend': '送信', 'c.feedbackSending': '送信中…', 'c.feedbackThanks': '送信しました。ありがとうございます！',
+    'c.feedbackEmpty': '内容を入力してください。', 'c.feedbackError': '送信できませんでした。時間をおいてもう一度お試しください。',
     'c.clearConfirm': 'このブラウザに保存されている、このアプリのデータ（計測記録・タスク名・設定）をすべて消して初期状態に戻します。\n元に戻せません。よろしいですか？',
     total: '合計', stopAll: '■ 全停止', taskCount: 'タスク数', taskMinus: 'タスクを減らす',
     taskPlus: 'タスクを増やす', sound: '通知音', soundKind: '通知音の種類', soundCheck: '動作確認',
@@ -108,6 +124,7 @@ var STRINGS = {
       '走っているタスクをもう一度押すと停止します。</p>' +
       '<p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。' +
       '設定ウィンドウは外側をタップすると閉じます。</p>' +
+      '<p>並び順を変えるには、タスクの枠を長押しして持ち上げ、置きたい場所の枠まで動かして離します。</p>' +
       '<p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。' +
       '音は最初に画面をどこか一度タップしてから有効になります。</p>' +
       '<p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>' +
@@ -128,6 +145,12 @@ var STRINGS = {
     'c.showQr': 'Show QR codes', 'c.changelog': 'Changelog', 'c.showChangelog': 'Show',
     'c.otherApps': 'Other apps', 'c.openPortal': 'Open app list', 'c.data': 'Data',
     'c.clearData': 'Clear saved data', 'c.fullscreen': 'Full screen', 'c.exitFullscreen': 'Exit full screen', 'c.help': 'How to use',
+    'c.feedback': 'Send feedback', 'c.feedbackLead': 'Comments, requests and bug reports are welcome.',
+    'c.feedbackMessage': 'Your feedback', 'c.feedbackPlaceholder': 'What you liked, what was hard, what you would like to see…',
+    'c.feedbackContact': 'Contact (optional, if you would like a reply)',
+    'c.feedbackNote': 'Only what you write, plus the app name, version and display language, is sent to the developer when you press Send.',
+    'c.feedbackSend': 'Send', 'c.feedbackSending': 'Sending…', 'c.feedbackThanks': 'Sent. Thank you!',
+    'c.feedbackEmpty': 'Please write something first.', 'c.feedbackError': 'Could not send. Please try again later.',
     'c.clearConfirm': 'This deletes everything this app has saved in this browser (records, task names, settings) and starts over.\nThis cannot be undone. Continue?',
     total: 'Total', stopAll: '■ Stop all', taskCount: 'Tasks', taskMinus: 'Remove a task',
     taskPlus: 'Add a task', sound: 'Alert sound', soundKind: 'Alert sound', soundCheck: 'Check',
@@ -148,6 +171,7 @@ var STRINGS = {
       '<p>Tap a task\'s card to start it; whichever task was running stops. Tap the running task again to stop it.</p>' +
       '<p>Each card\'s <span class="kbd-like">⋯</span> menu sets the task name, a target time, and resets that task. ' +
       'Tap outside a panel to close it.</p>' +
+      '<p>To change the order, press and hold a card until it lifts, drag it onto the place you want, and let go.</p>' +
       '<p>Past its target, a task\'s time turns <strong class="sample-over">bold red</strong> and an alert sounds. ' +
       'Sound works after the first tap anywhere on the page.</p>' +
       '<p>Targets are typed on a computer and picked with wheels on iPad and phones.</p>' +
@@ -193,10 +217,19 @@ var nextTaskId = 1;
 /** Card DOM handles, index-aligned with state.tasks. */
 var cards = [];
 
-function makeTask(index) {
+/** The first of the 6 card colours no other task uses (so a new task never repeats a colour). */
+function freeColor(tasks) {
+  for (var c = 0; c < 6; c++) {
+    if (!tasks.some(function (task) { return task.color === c; })) return c;
+  }
+  return tasks.length % 6;
+}
+
+function makeTask(index, tasks) {
   return {
     id: nextTaskId++,
     name: t('taskDefault', { x: NAME_LETTERS[index] || String(index + 1) }),
+    color: freeColor(tasks || []),   // stays with the task when the cards are reordered
     accumulatedMs: 0,
     targetMin: null,   // null = no target time (the default)
     notified: false,   // beeped once for the current overrun
@@ -206,7 +239,7 @@ function makeTask(index) {
 
 function defaultState() {
   var tasks = [];
-  for (var i = 0; i < DEFAULT_TASKS; i++) tasks.push(makeTask(i));
+  for (var i = 0; i < DEFAULT_TASKS; i++) tasks.push(makeTask(i, tasks));
   return {
     tasks: tasks, runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID,
     autoStopExtraMin: DEFAULT_AUTO_STOP_EXTRA_MIN,
@@ -331,7 +364,7 @@ function resetAllTimes() {
 
 function addTask() {
   if (state.tasks.length >= MAX_TASKS) return;
-  state.tasks.push(makeTask(state.tasks.length));
+  state.tasks.push(makeTask(state.tasks.length, state.tasks));
   save();
   buildCards();
   render();
@@ -425,7 +458,9 @@ function load() {
       accumulatedMs: acc,
       targetMin: target,
       notified: t.notified === true,
-      autoStopped: t.autoStopped === true
+      autoStopped: t.autoStopped === true,
+      // saved before v1.7.0: colours followed the position, so keep that look
+      color: clampInt(t.color, 0, 5, i % 6)
     });
   }
 
@@ -1015,8 +1050,8 @@ function buildCards() {
 
   for (var i = 0; i < state.tasks.length; i++) {
     var node = tpl.content.firstElementChild.cloneNode(true);
-    // Colour follows the card's position, so A/B/C keep the same colours.
-    node.setAttribute('data-color', String(i % 6));
+    // Colour belongs to the task, so it moves with the card when reordered.
+    node.setAttribute('data-color', String(state.tasks[i].color));
 
     var card = {
       root: node,
@@ -1099,6 +1134,99 @@ function readTargetInputs(card) {
 }
 
 /** True when the click landed on the card's menu button or inside the menu. */
+/* ----------------------------------------------------- reorder by dragging */
+
+var LONG_PRESS_MS = 400;     // hold this long to pick a card up (a quick tap still starts/stops it)
+var MOVE_CANCEL_PX = 10;     // moving further than this before the hold ends means "not a long press"
+var suppressClickUntil = 0;
+var drag = null;             // {card, from, to, startX, startY, pointerId}
+
+/** Move a task to another position; times, targets and the running task are untouched. */
+function moveTask(from, to) {
+  if (from === to || from < 0 || to < 0 || from >= state.tasks.length || to >= state.tasks.length) return;
+  var task = state.tasks.splice(from, 1)[0];
+  state.tasks.splice(to, 0, task);
+  save();
+  buildCards();
+  render();
+}
+
+/** The slot (card position measured when the drag began) under (x, y), or -1. */
+function slotAt(x, y) {
+  for (var i = 0; i < drag.slots.length; i++) {
+    var r = drag.slots[i];
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return i;
+  }
+  return -1;
+}
+
+/** Slide every other card to the slot it would take if the held card were dropped at `to`. */
+function previewOrder(to) {
+  for (var i = 0; i < cards.length; i++) {
+    if (i === drag.from) continue;
+    var p = i;                                     // position after moving `from` to `to`
+    if (drag.from < to && i > drag.from && i <= to) p = i - 1;
+    if (drag.from > to && i >= to && i < drag.from) p = i + 1;
+    var dx = drag.slots[p].left - drag.slots[i].left;
+    var dy = drag.slots[p].top - drag.slots[i].top;
+    cards[i].root.style.transform = (dx || dy) ? 'translate(' + dx + 'px, ' + dy + 'px)' : '';
+  }
+}
+
+function endDrag(commit) {
+  if (!drag) return;
+  var d = drag;
+  drag = null;
+  clearTimeout(d.timer);
+  if (!d.active) return;
+  suppressClickUntil = Date.now() + 400;
+  d.card.root.classList.remove('dragging');
+  els.tasks.classList.remove('reordering');
+  cards.forEach(function (c) { c.root.style.transform = ''; });
+  if (commit && d.to >= 0) moveTask(d.from, d.to);
+}
+
+/** Long-press a card, then drag it onto another card's place. */
+function bindReorder(card, index) {
+  card.root.addEventListener('pointerdown', function (event) {
+    if (event.button !== undefined && event.button !== 0) return;
+    if (isMenuTarget(event.target) || openMenuIndex >= 0 || drag) return;
+    drag = { card: card, from: index, to: index, startX: event.clientX, startY: event.clientY,
+             pointerId: event.pointerId, active: false, timer: null, slots: [] };
+    drag.timer = setTimeout(function () {
+      if (!drag || drag.card !== card) return;
+      drag.active = true;
+      drag.slots = cards.map(function (c) { return c.root.getBoundingClientRect(); });
+      card.root.classList.add('dragging');
+      els.tasks.classList.add('reordering');
+      try { card.root.setPointerCapture(drag.pointerId); } catch (e) { /* ignore */ }
+    }, LONG_PRESS_MS);
+  });
+  card.root.addEventListener('pointermove', function (event) {
+    if (!drag || drag.card !== card) return;
+    var dx = event.clientX - drag.startX;
+    var dy = event.clientY - drag.startY;
+    if (!drag.active) {
+      if (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX) endDrag(false);
+      return;
+    }
+    card.root.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(1.04)';
+    var to = slotAt(event.clientX, event.clientY);
+    if (to >= 0 && to !== drag.to) {         // between cards: keep the last preview
+      drag.to = to;
+      previewOrder(to);
+    }
+  });
+  card.root.addEventListener('pointerup', function () { if (drag && drag.card === card) endDrag(true); });
+  card.root.addEventListener('pointercancel', function () { if (drag && drag.card === card) endDrag(false); });
+  // While a card is held, the page must not scroll under the finger (iPad).
+  card.root.addEventListener('touchmove', function (event) {
+    if (drag && drag.active) event.preventDefault();
+  }, { passive: false });
+  // A long press on iOS would otherwise open the text-selection / callout menu.
+  card.root.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+}
+
 function isMenuTarget(target) {
   return !!(target && typeof target.closest === 'function' &&
             target.closest('.task-menu, .task-menu-btn'));
@@ -1111,6 +1239,7 @@ function bindCard(card, task, index) {
   // The whole card toggles, except where the per-task menu lives.
   card.root.addEventListener('click', function (event) {
     if (isMenuTarget(event.target)) return;
+    if (Date.now() < suppressClickUntil) return;   // the click that ends a drag is not a tap
     if (openMenuIndex === index) { closeTaskMenu(); syncBackdrop(); return; }
     toggleTask(task.id);
   });
@@ -1122,6 +1251,8 @@ function bindCard(card, task, index) {
     event.stopPropagation();
     toggleTask(task.id);
   });
+
+  bindReorder(card, index);
 
   card.menuBtn.addEventListener('click', function (event) {
     event.stopPropagation();
@@ -1406,6 +1537,47 @@ function openHelp() {
   els.helpOverlay.hidden = false;
 }
 
+/** The feedback window, opened by the header FB button. */
+function openFeedback() {
+  closeOverlays();
+  els.feedbackStatus.textContent = '';
+  els.feedbackStatus.className = 'feedback-status';
+  els.feedbackOverlay.hidden = false;
+  els.feedbackMessage.focus();
+}
+
+function setFeedbackStatus(key, kind) {
+  els.feedbackStatus.textContent = t(key);
+  els.feedbackStatus.className = 'feedback-status' + (kind ? ' ' + kind : '');
+}
+
+/** Post the message to the shared GAS endpoint. Sent as text/plain so the
+ * browser makes a "simple" request: GAS cannot answer a CORS preflight. */
+function sendFeedback(event) {
+  event.preventDefault();
+  var message = els.feedbackMessage.value.trim();
+  if (!message) { setFeedbackStatus('c.feedbackEmpty', 'err'); return; }
+  els.feedbackSend.disabled = true;
+  setFeedbackStatus('c.feedbackSending', '');
+  fetch(FEEDBACK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      app: APP_ID, version: APP_VERSION, lang: I18N.lang(), message: message,
+      contact: els.feedbackContact.value.trim(), website: els.feedbackWebsite.value
+    })
+  }).then(function (res) { return res.json(); }).then(function (res) {
+    if (!res || !res.ok) throw new Error(res && res.error);
+    els.feedbackMessage.value = '';
+    els.feedbackContact.value = '';
+    setFeedbackStatus('c.feedbackThanks', 'ok');
+  }).catch(function () {
+    setFeedbackStatus('c.feedbackError', 'err');
+  }).then(function () {
+    els.feedbackSend.disabled = false;
+  });
+}
+
 /** Delete everything this app keeps in the browser and start over. */
 function clearSavedData() {
   if (!window.confirm(t('c.clearConfirm'))) return;
@@ -1468,6 +1640,7 @@ function onKeyDown(event) {
     if (els.qrOverlay) els.qrOverlay.hidden = true;
     if (els.changelogOverlay) els.changelogOverlay.hidden = true;
     if (els.helpOverlay) els.helpOverlay.hidden = true;
+    if (els.feedbackOverlay) els.feedbackOverlay.hidden = true;
     closeOverlays();
     return;
   }
@@ -1526,6 +1699,15 @@ function init() {
   els.helpBtn = document.getElementById('help-btn');
   els.helpOverlay = document.getElementById('helpOverlay');
   els.helpClose = document.getElementById('helpClose');
+  els.feedbackBtn = document.getElementById('feedback-btn');
+  els.feedbackOverlay = document.getElementById('feedbackOverlay');
+  els.feedbackForm = document.getElementById('feedbackForm');
+  els.feedbackMessage = document.getElementById('feedbackMessage');
+  els.feedbackContact = document.getElementById('feedbackContact');
+  els.feedbackWebsite = document.getElementById('feedbackWebsite');
+  els.feedbackStatus = document.getElementById('feedbackStatus');
+  els.feedbackSend = document.getElementById('feedbackSend');
+  els.feedbackClose = document.getElementById('feedbackClose');
 
   // Before anything is built: default task names and labels use the language.
   I18N.init(LANG_KEY, STRINGS);
@@ -1604,6 +1786,16 @@ function init() {
   els.helpClose.addEventListener('click', function () { els.helpOverlay.hidden = true; });
   els.helpOverlay.addEventListener('click', function (event) {
     if (event.target === els.helpOverlay) els.helpOverlay.hidden = true;
+  });
+  els.feedbackBtn.addEventListener('click', openFeedback);
+  els.feedbackForm.addEventListener('submit', sendFeedback);
+  els.feedbackClose.addEventListener('click', function () { els.feedbackOverlay.hidden = true; });
+  els.feedbackOverlay.addEventListener('click', function (event) {
+    if (event.target === els.feedbackOverlay) els.feedbackOverlay.hidden = true;
+  });
+  // The global key handler ignores keys typed into fields, so Esc is handled here too.
+  els.feedbackOverlay.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') els.feedbackOverlay.hidden = true;
   });
   initFullscreen();
   els.clearDataBtn.addEventListener('click', clearSavedData);

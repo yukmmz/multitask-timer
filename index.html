@@ -36,6 +36,8 @@
     <svg class="fs-icon fs-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
     <svg class="fs-icon fs-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M20 15h-5v5M4 15h5v5"/></svg>
   </button>
+  <button id="feedback-btn" class="btn btn-icon" type="button"
+          data-i18n-title="c.feedback" data-i18n-aria-label="c.feedback" title="フィードバックを送る" aria-label="フィードバックを送る"><span class="fb-mark" aria-hidden="true">FB</span></button>
   <button id="help-btn" class="btn btn-icon" type="button"
           data-i18n-title="c.help" data-i18n-aria-label="c.help" title="使い方" aria-label="使い方">?</button>
   <button id="settings-btn" class="btn btn-icon" type="button"
@@ -216,6 +218,27 @@
     <div class="changelog-list help-body" data-i18n-html="help"></div>
     <button id="helpClose" class="btn" type="button" data-i18n="c.close">閉じる</button>
   </div>
+</div>
+
+<!-- Feedback: the header FB button opens this; sendFeedback() posts to the shared GAS web app -->
+<div id="feedbackOverlay" hidden>
+  <form id="feedbackForm" class="qrcard changelog-card feedback-card" role="dialog"
+        data-i18n-aria-label="c.feedback" aria-label="フィードバックを送る" novalidate>
+    <h2 class="changelog-title" data-i18n="c.feedback">フィードバックを送る</h2>
+    <p class="feedback-lead" data-i18n="c.feedbackLead"></p>
+    <textarea id="feedbackMessage" class="feedback-message" maxlength="2000" rows="6" required
+              data-i18n-placeholder="c.feedbackPlaceholder" data-i18n-aria-label="c.feedbackMessage"></textarea>
+    <input id="feedbackContact" class="feedback-contact" type="text" maxlength="200" autocomplete="email"
+           data-i18n-placeholder="c.feedbackContact" data-i18n-aria-label="c.feedbackContact">
+    <!-- honeypot: invisible to people, bots fill it in and are ignored by the server -->
+    <input id="feedbackWebsite" class="feedback-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="feedback-note" data-i18n="c.feedbackNote"></p>
+    <p id="feedbackStatus" class="feedback-status" role="status" aria-live="polite"></p>
+    <div class="feedback-actions">
+      <button id="feedbackClose" class="btn" type="button" data-i18n="c.close">閉じる</button>
+      <button id="feedbackSend" class="btn btn-primary" type="submit" data-i18n="c.feedbackSend">送信</button>
+    </div>
+  </form>
 </div>
 
 <script src="i18n.js"></script>

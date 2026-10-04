@@ -95,7 +95,9 @@ function makeContext(store) {
    'test-sound', 'sound-select', 'appVersion', 'qrOverlay', 'qrBtn', 'qrClose',
    'qrUrl', 'qrSrcUrl', 'auto-stop-extra', 'auto-stop-no-target',
    'changelogBtn', 'changelogOverlay', 'changelogList', 'changelogClose',
-   'lang-select', 'fullscreen-btn', 'clearDataBtn', 'help-btn', 'helpOverlay', 'helpClose']
+   'lang-select', 'fullscreen-btn', 'clearDataBtn', 'help-btn', 'helpOverlay', 'helpClose',
+   'feedback-btn', 'feedbackOverlay', 'feedbackForm', 'feedbackMessage', 'feedbackContact',
+   'feedbackWebsite', 'feedbackStatus', 'feedbackSend', 'feedbackClose']
     .forEach(id => { byId[id] = makeEl('div'); });
   byId.tasks.textContent = '';
 
@@ -568,7 +570,7 @@ ctxI.__els['lang-select'].handlers.change[0]();
 check('switched to English', ctxI.I18N.lang() === 'en');
 check('en duration', ctxI.formatTargetLabel(90) === '1 h 30 min', ctxI.formatTargetLabel(90));
 check('<html lang> follows', ctxI.__doc.documentElement.lang === 'en', ctxI.__doc.documentElement.lang);
-check('changelog rebuilt in English', /moved from the settings/.test(
+check('changelog rebuilt in English', /send feedback or a bug report/.test(
   ctxI.__els.changelogList.children[0].children[1].children[0].textContent));
 check('sound names in English', ctxI.__els['sound-select'].children[0].textContent === 'Chime (3 notes)',
   ctxI.__els['sound-select'].children[0].textContent);
@@ -585,6 +587,29 @@ check('clear data removes every key', !('multitask-timer/v1' in storeI) &&
   !('multitask-timer/lang' in storeI) && !('multitask-timer/seen-version' in storeI),
   Object.keys(storeI).join(','));
 check('...and reloads', ctxI2.window.reloaded === true);
+
+console.log('\n[24] reorder keeps times, running task and colours');
+const storeR = {};
+const ctxR = makeContext(storeR);
+check('default colours 0,1,2', ctxR.state.tasks.map(t => t.color).join(',') === '0,1,2',
+  ctxR.state.tasks.map(t => t.color).join(','));
+const [rA, rB, rC] = ctxR.state.tasks;
+ctxR.toggleTask(rB.id);
+ctxR.moveTask(1, 0);
+check('B moved to the front', ctxR.state.tasks.map(t => t.id).join(',') === [rB.id, rA.id, rC.id].join(','));
+check('colours travel with tasks', ctxR.state.tasks.map(t => t.color).join(',') === '1,0,2',
+  ctxR.state.tasks.map(t => t.color).join(','));
+check('running task unchanged', ctxR.state.runningId === rB.id);
+const ctxR2 = makeContext(storeR);
+check('order and colours survive a reload',
+  ctxR2.state.tasks.map(t => t.name + ':' + t.color).join(',') === 'タスク B:1,タスク A:0,タスク C:2',
+  ctxR2.state.tasks.map(t => t.name + ':' + t.color).join(','));
+ctxR2.moveTask(0, 2);
+ctxR2.addTask();
+check('a new task gets an unused colour', ctxR2.state.tasks[3].color === 3, ctxR2.state.tasks[3].color);
+const storeOld = { 'multitask-timer/v1': JSON.stringify({ tasks: [{ name: 'x' }, { name: 'y' }], runningId: null }) };
+check('data saved before colours keeps position colours',
+  makeContext(storeOld).state.tasks.map(t => t.color).join(',') === '0,1');
 
 console.log(failures === 0 ? '\nALL PASS\n' : '\n' + failures + ' FAILURE(S)\n');
 process.exit(failures === 0 ? 0 : 1);

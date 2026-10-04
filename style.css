@@ -232,6 +232,18 @@ main {
   transition: border-color .12s ease, box-shadow .12s ease, transform .06s ease;
 }
 
+/* Reordering: long-press lifts the card; the card under the finger shows where it will go. */
+.card.dragging {
+  z-index: 30;
+  box-shadow: var(--shadow-run);
+  opacity: .92;
+  transition: none;
+  cursor: grabbing;
+}
+/* The other cards slide to where they would land if the held card were dropped now. */
+.tasks.reordering .card:not(.dragging) { transition: transform .18s ease; }
+.card { -webkit-touch-callout: none; }
+
 .card[data-color="0"] { --tint: var(--t0-tint); --edge: var(--t0-edge); --strong: var(--t0-strong); }
 .card[data-color="1"] { --tint: var(--t1-tint); --edge: var(--t1-edge); --strong: var(--t1-strong); }
 .card[data-color="2"] { --tint: var(--t2-tint); --edge: var(--t2-edge); --strong: var(--t2-strong); }
@@ -724,6 +736,50 @@ kbd, .kbd-like {
 
 #help-btn { font-size: 1.35rem; font-weight: 700; }
 
+/* "FB" packed edge to edge inside the 36x36 key: bold, squeezed sideways, no extra spacing. */
+#feedback-btn .fb-mark {
+  display: inline-block;
+  font-size: 1.8rem;
+  font-weight: 640;
+  letter-spacing: -.05em;
+  line-height: 1;
+  transform: scaleX(.74);
+}
+
+/* ---------- feedback overlay ---------- */
+
+#feedbackOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 24, 40, .45);
+}
+
+#feedbackOverlay[hidden] { display: none; }
+
+.feedback-card { gap: 8px; }
+.feedback-lead, .feedback-note { margin: 0; font-size: .85rem; color: var(--muted); }
+.feedback-message, .feedback-contact {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: .95rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg, #fff);
+  color: inherit;
+}
+.feedback-message { resize: vertical; min-height: 120px; }
+.feedback-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.feedback-status { margin: 0; min-height: 1.2em; font-size: .85rem; font-weight: 700; }
+.feedback-status.ok { color: #15803d; }
+.feedback-status.err { color: #dc2626; }
+.feedback-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
 .changelog-card {
   width: min(520px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
@@ -804,3 +860,6 @@ kbd, .kbd-like {
 
 /* A link styled as a button (「アプリ一覧を開く」). */
 a.btn { text-decoration: none; display: inline-block; }
+
+#feedbackSend { background: var(--accent); border-color: var(--accent); color: #fff; }
+#feedbackSend:disabled { opacity: .6; }

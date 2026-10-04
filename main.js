@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.7.1';
+var APP_VERSION = '1.8.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 /* Shared feedback endpoint (Google Apps Script web app, one for every yukmmz.github.io app).
@@ -32,6 +32,10 @@ var APP_ID = 'multitask-timer';
  * here: the test checks that the first entry matches APP_VERSION. Written for
  * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.8.0', date: '2026-10-05', items: [
+    { ja: 'ボタンにマウスを乗せたときの説明が、すぐ（0.5秒で）出るようにしました',
+      en: 'Button hints now appear quickly (after 0.5 s) when you hover with the mouse' }
+  ] },
   { version: '1.7.1', date: '2026-10-04', items: [
     { ja: '「FB」ボタンの文字を細く、少し小さくしました',
       en: 'The "FB" button\'s letters are now thinner and a little smaller' }
@@ -1670,6 +1674,69 @@ function onKeyDown(event) {
   }
 }
 
+// Quick tooltips: the browser's own `title` tooltip waits about 1-2 s, too slow for icon-only
+// buttons. For a mouse pointer, show the element's `title` in our own bubble after TIP_DELAY_MS
+// instead. The `title` is lifted into data-tip while hovering (so the native tooltip never
+// appears) and put back on leave, so i18n.js can keep rewriting `title` on a language switch.
+// Touch and pen are left alone (no hover there).
+var TIP_DELAY_MS = 500;
+
+function initQuickTips() {
+  if (!document.body || typeof document.createElement !== 'function') return;  // headless test stubs
+  var bubble = document.createElement('div');
+  bubble.className = 'quick-tip';
+  bubble.setAttribute('role', 'tooltip');
+  bubble.hidden = true;
+  document.body.appendChild(bubble);
+  var target = null;
+  var timer = 0;
+
+  function place() {
+    var r = target.getBoundingClientRect();
+    var b = bubble.getBoundingClientRect();
+    var left = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2), window.innerWidth - b.width - 8);
+    var top = r.bottom + 6;
+    if (top + b.height > window.innerHeight - 8) top = r.top - b.height - 6;  // no room below
+    bubble.style.left = left + 'px';
+    bubble.style.top = top + 'px';
+  }
+
+  function hide() {
+    clearTimeout(timer);
+    bubble.hidden = true;
+    if (target) {
+      // put the title back unless something (i18n) already set a fresh one
+      if (!target.hasAttribute('title')) target.setAttribute('title', target.dataset.tip);
+      delete target.dataset.tip;
+      target = null;
+    }
+  }
+
+  document.addEventListener('pointerover', function (e) {
+    if (e.pointerType !== 'mouse') return;
+    var el = e.target.closest('[title], [data-tip]');
+    if (el === target) return;
+    hide();
+    if (!el || !el.getAttribute('title')) return;
+    target = el;
+    target.dataset.tip = target.getAttribute('title');
+    target.removeAttribute('title');
+    timer = setTimeout(function () {
+      if (!target || !document.contains(target)) return;
+      bubble.textContent = target.dataset.tip;
+      bubble.hidden = false;
+      place();
+    }, TIP_DELAY_MS);
+  });
+  document.addEventListener('pointerout', function (e) {
+    if (target && !target.contains(e.relatedTarget)) hide();
+  });
+  document.addEventListener('pointerdown', hide);
+  document.addEventListener('keydown', hide);
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('blur', hide);
+}
+
 function init() {
   els.tasks = document.getElementById('tasks');
   els.totalTime = document.getElementById('total-time');
@@ -1812,6 +1879,7 @@ function init() {
   els.taskMinus.addEventListener('click', function () { unlockAudio(); removeTask(); });
 
   document.addEventListener('keydown', onKeyDown);
+  initQuickTips();
   // Unlock audio on the very first gesture anywhere, so the first overrun beeps.
   document.addEventListener('pointerdown', unlockAudio, { once: true });
 

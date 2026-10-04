@@ -863,3 +863,20 @@ a.btn { text-decoration: none; display: inline-block; }
 
 #feedbackSend { background: var(--accent); border-color: var(--accent); color: #fff; }
 #feedbackSend:disabled { opacity: .6; }
+
+/* Quick tooltip for icon buttons (mouse only; shown by initQuickTips after 0.5 s). */
+.quick-tip {
+  position: fixed;
+  z-index: 100;
+  max-width: 260px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: .8rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow);
+}
+.quick-tip[hidden] { display: none; }

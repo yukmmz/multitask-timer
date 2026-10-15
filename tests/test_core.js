@@ -97,7 +97,9 @@ function makeContext(store) {
    'changelogBtn', 'changelogOverlay', 'changelogList', 'changelogClose',
    'lang-select', 'fullscreen-btn', 'clearDataBtn', 'help-btn', 'helpOverlay', 'helpClose',
    'feedback-btn', 'feedbackOverlay', 'feedbackForm', 'feedbackMessage', 'feedbackContact',
-   'feedbackWebsite', 'feedbackStatus', 'feedbackSend', 'feedbackClose']
+   'feedbackWebsite', 'feedbackStatus', 'feedbackSend', 'feedbackClose',
+   'task-area', 'page-name', 'page-dots', 'page-prev', 'page-next', 'page-list-btn', 'page-list',
+   'page-list-items', 'page-list-add', 'page-name-input', 'page-delete']
     .forEach(id => { byId[id] = makeEl('div'); });
   byId.tasks.textContent = '';
 
@@ -570,7 +572,7 @@ ctxI.__els['lang-select'].handlers.change[0]();
 check('switched to English', ctxI.I18N.lang() === 'en');
 check('en duration', ctxI.formatTargetLabel(90) === '1 h 30 min', ctxI.formatTargetLabel(90));
 check('<html lang> follows', ctxI.__doc.documentElement.lang === 'en', ctxI.__doc.documentElement.lang);
-check('changelog rebuilt in English', /hints now appear quickly/.test(
+check('changelog rebuilt in English', /keep sets of tasks on separate pages/.test(
   ctxI.__els.changelogList.children[0].children[1].children[0].textContent));
 check('sound names in English', ctxI.__els['sound-select'].children[0].textContent === 'Chime (3 notes)',
   ctxI.__els['sound-select'].children[0].textContent);
@@ -610,6 +612,149 @@ check('a new task gets an unused colour', ctxR2.state.tasks[3].color === 3, ctxR
 const storeOld = { 'multitask-timer/v1': JSON.stringify({ tasks: [{ name: 'x' }, { name: 'y' }], runningId: null }) };
 check('data saved before colours keeps position colours',
   makeContext(storeOld).state.tasks.map(t => t.color).join(',') === '0,1');
+
+console.log('\n[25] pages');
+NOW += 1000;
+const storeP = {};
+const ctxP = makeContext(storeP);
+check('one page at first', ctxP.state.pages.length === 1 && ctxP.state.page === 0);
+check('default page name', ctxP.pageName(0) === 'ページ1', ctxP.pageName(0));
+check('+ shown on the last page', ctxP.__els['page-next'].textContent === '＋');
+check('‹ disabled on page 1', ctxP.__els['page-prev'].disabled === true);
+const [pA] = ctxP.state.tasks;
+ctxP.toggleTask(pA.id);                       // A runs on page 1
+NOW += 4000;
+ctxP.addPage();
+check('a page was added and shown', ctxP.state.pages.length === 2 && ctxP.state.page === 1);
+check('the new page has its own 3 tasks', ctxP.state.tasks.length === 3 && ctxP.state.tasks[0].id !== pA.id);
+check('page 1 task keeps running on page 2', ctxP.state.runningId === pA.id);
+NOW += 1000;
+check('...and keeps counting', ctxP.elapsedOf(pA) === 5000, ctxP.elapsedOf(pA));
+check('total is this page only', ctxP.totalElapsed() === 0, ctxP.totalElapsed());
+check('running page marked in the dots',
+  ctxP.__els['page-dots'].children.map(d => d.className).join(' / ') === 'page-dot running / page-dot current',
+  ctxP.__els['page-dots'].children.map(d => d.className).join(' / '));
+ctxP.addTask();
+check('task count changes this page only',
+  ctxP.state.pages[1].tasks.length === 4 && ctxP.state.pages[0].tasks.length === 3);
+const pD = ctxP.state.tasks[0];
+ctxP.toggleTask(pD.id);                       // starting a page-2 task stops A
+check('starting a task on page 2 stops page 1', ctxP.state.runningId === pD.id && ctxP.elapsedOf(pA) === 5000);
+NOW += 2000;
+ctxP.goToPage(0);
+ctxP.resetAllTimes();                         // page 1 only; D keeps running
+check('reset-all clears this page only', ctxP.elapsedOf(pA) === 0 && ctxP.elapsedOf(pD) === 2000,
+  ctxP.elapsedOf(pA) + ' / ' + ctxP.elapsedOf(pD));
+check('reset-all leaves a run on another page', ctxP.state.runningId === pD.id);
+ctxP.setPageName(1, '  午後  ');
+check('page renamed (trimmed)', ctxP.pageName(1) === '午後', ctxP.pageName(1));
+ctxP.setPageName(0, '');
+check('blank name -> default', ctxP.pageName(0) === 'ページ1');
+ctxP.state.tasks[1].name = 'メール';
+ctxP.save();
+
+// reload while page 2's task runs, showing page 2
+ctxP.goToPage(1);
+const ctxP2 = makeContext(storeP);
+check('pages restored', ctxP2.state.pages.length === 2 && ctxP2.state.page === 1);
+check('names restored', ctxP2.pageName(1) === '午後' && ctxP2.state.pages[0].tasks[1].name === 'メール');
+check('page 2 task still running after reload',
+  ctxP2.state.runningId === ctxP2.state.pages[1].tasks[0].id &&
+  ctxP2.elapsedOf(ctxP2.state.pages[1].tasks[0]) === 2000);
+check('task count per page restored', ctxP2.state.pages[1].tasks.length === 4);
+check('state.tasks is the shown page', ctxP2.state.tasks === ctxP2.state.pages[1].tasks);
+check('state.tasks is not stored twice', !('tasks' in JSON.parse(storeP['multitask-timer/v1'])));
+
+// default names follow the language
+ctxP2.I18N.set('en');
+check('default name in English', ctxP2.pageName(0) === 'Page 1', ctxP2.pageName(0));
+check('custom name kept in English', ctxP2.pageName(1) === '午後');
+ctxP2.I18N.set('ja');
+
+// overrun alert for a task running on another page
+ctxP2.state.pages[1].tasks[0].targetMin = 1;
+ctxP2.goToPage(0);
+NOW += 60000;
+ctxP2.render();
+check('overrun on another page still alerts', ctxP2.state.pages[1].tasks[0].notified === true);
+
+// deleting always asks; "Cancel" keeps the page
+ctxP2.window.confirm = () => false;
+ctxP2.removePage(0);
+check('cancelled delete keeps the page', ctxP2.state.pages.length === 2);
+ctxP2.window.confirm = () => true;
+
+// delete the page whose task is running
+ctxP2.goToPage(1);
+ctxP2.removePage();
+check('page deleted', ctxP2.state.pages.length === 1 && ctxP2.state.page === 0);
+check('its running task is gone', ctxP2.state.runningId === null);
+ctxP2.removePage();
+check('the last page cannot be deleted', ctxP2.state.pages.length === 1);
+
+// delete another page from the list: the shown page stays on screen
+const ctxDel = makeContext({});
+ctxDel.addPage(); ctxDel.addPage();           // 3 pages, showing page 3
+const shown = ctxDel.state.tasks;
+let asked = '';
+ctxDel.window.confirm = (msg) => { asked = msg; return true; };
+ctxDel.removePage(0);
+check('delete asks with the page name', /「ページ1」を削除しますか/.test(asked), asked);
+check('other page deleted, shown page kept', ctxDel.state.pages.length === 2 &&
+  ctxDel.state.page === 1 && ctxDel.state.tasks === shown);
+check('page list has a × per page', (() => {
+  ctxDel.setPageListOpen(true);
+  return ctxDel.__els['page-list-items'].children.every(item => item.children.length === 2);
+})());
+
+// limits and edges
+for (let i = 0; i < 10; i++) ctxP2.addPage();
+check('capped at 5 pages', ctxP2.state.pages.length === 5, ctxP2.state.pages.length);
+check('+ disabled at the cap', ctxP2.__els['page-next'].disabled === true);
+ctxP2.goToPage(9);
+check('out-of-range page ignored', ctxP2.state.page === 4);
+
+// data from before pages: one page, running task kept
+const storeV18 = { 'multitask-timer/v1': JSON.stringify({
+  tasks: [{ id: 7, name: 'x', accumulatedMs: 1000 }, { id: 8, name: 'y' }], runningId: 8, startedAt: NOW - 3000 }) };
+const ctxOld = makeContext(storeV18);
+check('old data -> page 1', ctxOld.state.pages.length === 1 && ctxOld.state.tasks.map(t => t.name).join() === 'x,y');
+check('old running task restored', ctxOld.state.runningId === ctxOld.state.tasks[1].id &&
+  ctxOld.elapsedOf(ctxOld.state.tasks[1]) === 3000);
+const storeNoName = { 'multitask-timer/v1': JSON.stringify({ tasks: [{}, {}] }) };
+check('stored task without a name gets the default',
+  makeContext(storeNoName).state.tasks.map(t => t.name).join() === 'タスク A,タスク B');
+
+// reorder pages: names (default and custom), tasks and the shown page travel together
+const storeM = {};
+const ctxM = makeContext(storeM);
+ctxM.addPage(); ctxM.addPage();               // ページ1, ページ2, ページ3; showing 3
+ctxM.setPageName(1, '午後');
+const p3tasks = ctxM.state.pages[2].tasks;
+ctxM.movePage(2, 0);
+check('order after move', [0, 1, 2].map(i => ctxM.pageName(i)).join() === 'ページ3,ページ1,午後',
+  [0, 1, 2].map(i => ctxM.pageName(i)).join());
+check('shown page follows the move', ctxM.state.page === 0 && ctxM.state.tasks === p3tasks);
+const ctxM2 = makeContext(storeM);
+check('order and names survive a reload', [0, 1, 2].map(i => ctxM2.pageName(i)).join() === 'ページ3,ページ1,午後');
+ctxM2.removePage(1);                          // delete ページ1
+check('deleting keeps the other names', [0, 1].map(i => ctxM2.pageName(i)).join() === 'ページ3,午後');
+ctxM2.addPage();
+check('a new page takes the free number', ctxM2.pageName(2) === 'ページ1', ctxM2.pageName(2));
+ctxM2.I18N.set('en');
+check('default names still follow the language', ctxM2.pageName(0) === 'Page 3', ctxM2.pageName(0));
+ctxM2.I18N.set('ja');
+
+// keyboard
+const ctxK = makeContext({});
+ctxK.addPage();
+const keyHandler = ctxK.__doc.handlers.keydown[0];
+keyHandler({ key: 'ArrowLeft', target: { tagName: 'BODY' }, preventDefault() {} });
+check('← goes to the previous page', ctxK.state.page === 0);
+keyHandler({ key: 'ArrowRight', target: { tagName: 'BODY' }, preventDefault() {} });
+check('→ goes to the next page', ctxK.state.page === 1);
+keyHandler({ key: 'ArrowRight', target: { tagName: 'BODY' }, preventDefault() {} });
+check('→ on the last page does not add one', ctxK.state.pages.length === 2);
 
 console.log(failures === 0 ? '\nALL PASS\n' : '\n' + failures + ' FAILURE(S)\n');
 process.exit(failures === 0 ? 0 : 1);

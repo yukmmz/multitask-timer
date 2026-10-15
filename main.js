@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.8.0';
+var APP_VERSION = '1.9.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 /* Shared feedback endpoint (Google Apps Script web app, one for every yukmmz.github.io app).
@@ -32,6 +32,14 @@ var APP_ID = 'multitask-timer';
  * here: the test checks that the first entry matches APP_VERSION. Written for
  * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.9.0', date: '2026-10-15', items: [
+    { ja: 'ご要望を受けて、タスクの組をページに分けて持てるようにしました。下の ‹ › ボタン（iPad では左右スワイプ、トラックパッドでは2本指の左右スクロール）でページを切り替え、最後のページの ＋ でページを増やせます',
+      en: 'By request: keep sets of tasks on separate pages. Switch with the ‹ › buttons at the bottom (swipe on iPad, or scroll sideways with two fingers on a trackpad); the + on the last page adds a page' },
+    { ja: 'ページ一覧（下の ▤ ボタン）で、各ページのタスクと時間を並べて見られます。押すとそのページへ移り、× で削除、長押しで並べ替えができます',
+      en: 'The page list (the ▤ button at the bottom) shows every page\'s tasks and times; tap one to go there, × to delete it, press and hold to reorder' },
+    { ja: '動いているタスクは、ページを移っても止まりません。合計・タスク数・「すべて 00:00:00 に戻す」は今のページだけに効きます',
+      en: 'A running task keeps running when you change pages. The total, the task count and "Reset all" apply to the current page only' }
+  ] },
   { version: '1.8.0', date: '2026-10-05', items: [
     { ja: 'ボタンにマウスを乗せたときの説明が、すぐ（0.5秒で）出るようにしました',
       en: 'Button hints now appear quickly (after 0.5 s) when you hover with the mouse' }
@@ -119,7 +127,12 @@ var STRINGS = {
     autoStopWithTargetAria: '目安時間があるタスクの自動停止', autoStopNoTargetAria: '目安時間がないタスクの自動停止',
     autoStopOff: '自動停止しない', autoStopPlus: '目安 ＋ {d}',
     measured: '計測時間', resetAll: 'すべて 00:00:00 に戻す',
-    resetAllConfirm: 'すべてのタスクの計測時間を 00:00:00 に戻しますか？\n（タスク名と目安時間は残ります）',
+    resetAllConfirm: 'このページのすべてのタスクの計測時間を 00:00:00 に戻しますか？\n（タスク名と目安時間は残ります）',
+    pageDefault: 'ページ{n}', pagePrev: '前のページ', pageNext: '次のページ', pageAdd: 'ページを追加',
+    pageList: 'ページ一覧', thisPage: 'このページ', pageName: 'ページ名', pageDelete: 'このページを削除',
+    pageDeleteConfirm: '「{name}」を削除しますか？\n（このページのタスクと計測時間も消えます。元に戻せません）',
+    pageDeleteNamed: '「{name}」を削除',
+    pageRunning: '計測中',
     taskMenu: 'このタスクの設定', taskName: 'タスク名', target: '目安時間',
     targetHours: '目安時間（時間）', targetMinutes: '目安時間（分）', unitHours: '時間', unitMinutes: '分',
     taskReset: '時間リセット', taskDefault: 'タスク {x}', untitled: '（無題）',
@@ -133,6 +146,11 @@ var STRINGS = {
       '<p>タスク名・目安時間・そのタスクだけの時間リセットは、各枠の右上の <span class="kbd-like">⋯</span> から設定できます。' +
       '設定ウィンドウは外側をタップすると閉じます。</p>' +
       '<p>並び順を変えるには、タスクの枠を長押しして持ち上げ、置きたい場所の枠まで動かして離します。</p>' +
+      '<p>時間帯ごとにタスクの組を変えたいときは、<strong>ページ</strong>を分けます。下の <span class="kbd-like">‹</span> <span class="kbd-like">›</span>' +
+      '（iPad では左右スワイプ、トラックパッドでは2本指の左右スクロール、キーボードでは ← →）でページを切り替え、最後のページの <span class="kbd-like">＋</span> でページを増やします。' +
+      '<span class="kbd-like">▤</span> でページ一覧を開くと、各ページのタスクと時間が見られます。' +
+      '一覧の各ページの <span class="kbd-like">×</span> でそのページを削除、長押しして上下に動かすと順番の入れ替えができます。ページ名の変更は設定（⚙）から。動いているタスクはページを移っても止まりません。' +
+      '上の合計・タスク数・「すべて 00:00:00 に戻す」は今のページだけに効きます。</p>' +
       '<p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。' +
       '音は最初に画面をどこか一度タップしてから有効になります。</p>' +
       '<p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>' +
@@ -145,7 +163,7 @@ var STRINGS = {
       '<p><strong>iPad / iPhone で音が鳴らないとき</strong>は、' +
       '<strong>設定 → サウンド → 消音モード を OFF</strong> にしてください' +
       '（音量を上げただけでは鳴らないことがあります）。</p>' +
-      '<p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>Space</kbd> 全停止 / <kbd>?</kbd> 使い方 / <kbd>Esc</kbd> 閉じる</p>' +
+      '<p class="hint">ショートカット: <kbd>1</kbd>〜<kbd>6</kbd> タスク切替 / <kbd>←</kbd> <kbd>→</kbd> ページ切替 / <kbd>Space</kbd> 全停止 / <kbd>?</kbd> 使い方 / <kbd>Esc</kbd> 閉じる</p>' +
       '<p class="note">計測データはこのブラウザ内（localStorage）にのみ保存されます。サーバーへは送信されません。</p>'
   },
   en: {
@@ -167,7 +185,12 @@ var STRINGS = {
     autoStopWithTargetAria: 'Auto-stop for tasks with a target', autoStopNoTargetAria: 'Auto-stop for tasks without a target',
     autoStopOff: 'Never', autoStopPlus: 'Target + {d}',
     measured: 'Times', resetAll: 'Reset all to 00:00:00',
-    resetAllConfirm: 'Reset every task to 00:00:00?\n(Task names and targets are kept.)',
+    resetAllConfirm: 'Reset every task on this page to 00:00:00?\n(Task names and targets are kept.)',
+    pageDefault: 'Page {n}', pagePrev: 'Previous page', pageNext: 'Next page', pageAdd: 'Add a page',
+    pageList: 'Page list', thisPage: 'This page', pageName: 'Page name', pageDelete: 'Delete this page',
+    pageDeleteConfirm: 'Delete "{name}"?\n(Its tasks and recorded times go too. This cannot be undone.)',
+    pageDeleteNamed: 'Delete "{name}"',
+    pageRunning: 'Running',
     taskMenu: 'Task settings', taskName: 'Task name', target: 'Target',
     targetHours: 'Target (hours)', targetMinutes: 'Target (minutes)', unitHours: 'h', unitMinutes: 'min',
     taskReset: 'Reset time', taskDefault: 'Task {x}', untitled: '(untitled)',
@@ -180,6 +203,11 @@ var STRINGS = {
       '<p>Each card\'s <span class="kbd-like">⋯</span> menu sets the task name, a target time, and resets that task. ' +
       'Tap outside a panel to close it.</p>' +
       '<p>To change the order, press and hold a card until it lifts, drag it onto the place you want, and let go.</p>' +
+      '<p>For different sets of tasks at different times of day, use <strong>pages</strong>. Switch with ' +
+      '<span class="kbd-like">‹</span> <span class="kbd-like">›</span> at the bottom (swipe on iPad, two-finger sideways scroll on a trackpad, or ← → on a keyboard); ' +
+      'the <span class="kbd-like">+</span> on the last page adds one. <span class="kbd-like">▤</span> opens the page list with every page\'s tasks and times. ' +
+      'The <span class="kbd-like">×</span> on a page in the list deletes it (after asking); press and hold one and drag it to change the order. Rename a page in the settings (⚙). A running task keeps running when you change pages; ' +
+      'the total, the task count and "Reset all" apply to the current page only.</p>' +
       '<p>Past its target, a task\'s time turns <strong class="sample-over">bold red</strong> and an alert sounds. ' +
       'Sound works after the first tap anywhere on the page.</p>' +
       '<p>Targets are typed on a computer and picked with wheels on iPad and phones.</p>' +
@@ -190,7 +218,7 @@ var STRINGS = {
       'If you hear it, overrun alerts will sound too.</p>' +
       '<p><strong>No sound on iPad / iPhone?</strong> Turn <strong>Settings → Sounds → Silent Mode OFF</strong> ' +
       '(raising the volume alone may not help).</p>' +
-      '<p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>6</kbd> switch task / <kbd>Space</kbd> stop all / <kbd>?</kbd> how to use / <kbd>Esc</kbd> close</p>' +
+      '<p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>6</kbd> switch task / <kbd>←</kbd> <kbd>→</kbd> switch page / <kbd>Space</kbd> stop all / <kbd>?</kbd> how to use / <kbd>Esc</kbd> close</p>' +
       '<p class="note">Records are stored only in this browser (localStorage) and never sent to a server.</p>'
   }
 };
@@ -202,6 +230,11 @@ var STORAGE_KEY = 'multitask-timer/v1';
 var MIN_TASKS = 1;
 var MAX_TASKS = 6;
 var DEFAULT_TASKS = 3;
+var MIN_PAGES = 1;
+// TODO: [ASSUMPTION] up to 5 pages (one per part of the day is plenty)
+var MAX_PAGES = 5;
+var PAGE_NAME_MAX = 24;
+var PAGE_LIST_KEY = 'multitask-timer/page-list';   // page list open or closed, per device
 var TICK_MS = 200;
 var NAME_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
@@ -218,7 +251,14 @@ var AUTO_STOP_NO_TARGET_CHOICES = [60, 120, 180, 240, 300, 360, 480, 600, 720, 1
 
 /* ------------------------------------------------------------------ state */
 
-/** @type {{tasks: Array, runningId: (number|null), startedAt: (number|null)}} */
+/* Pages: each page holds its own set of tasks (e.g. A-B-C in the morning, D-E
+ * later). `state.tasks` always points at the CURRENT page's task array, so the
+ * task-count stepper, reorder, reset-all, the total and the cards all work on
+ * the current page only. The one-runner rule spans every page: a task keeps
+ * running when the user changes page, and starting a task on any page stops it.
+ * Task ids are unique across pages, so findTask / elapsedOf work everywhere. */
+
+/** @type {{pages: Array, page: number, tasks: Array, runningId: (number|null), startedAt: (number|null)}} */
 var state = null;
 var nextTaskId = 1;
 
@@ -245,11 +285,26 @@ function makeTask(index, tasks) {
   };
 }
 
-function defaultState() {
+/* A page's default name is "Page <num>". `num` is fixed when the page is made
+ * (the smallest number no other page uses), so the name stays with the page when
+ * pages are reordered or deleted, and still follows the language. */
+function makePage(pages) {
   var tasks = [];
   for (var i = 0; i < DEFAULT_TASKS; i++) tasks.push(makeTask(i, tasks));
+  return { name: null, num: freePageNum(pages || []), tasks: tasks };   // name null = "Page <num>"
+}
+
+function freePageNum(pages) {
+  for (var n = 1; ; n++) {
+    if (!pages.some(function (page) { return page.num === n; })) return n;
+  }
+}
+
+function defaultState() {
+  var first = makePage();
   return {
-    tasks: tasks, runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID,
+    pages: [first], page: 0, tasks: first.tasks,
+    runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID,
     autoStopExtraMin: DEFAULT_AUTO_STOP_EXTRA_MIN,
     autoStopNoTargetMin: DEFAULT_AUTO_STOP_NO_TARGET_MIN
   };
@@ -278,10 +333,27 @@ function totalElapsed() {
   return sum;
 }
 
-function findTask(id) {
-  for (var i = 0; i < state.tasks.length; i++) {
-    if (state.tasks[i].id === id) return state.tasks[i];
+/** Every task on every page. */
+function allTasks() {
+  var list = [];
+  for (var p = 0; p < state.pages.length; p++) list = list.concat(state.pages[p].tasks);
+  return list;
+}
+
+/** Index of the page holding task `id`, or -1. */
+function pageOfTask(id) {
+  for (var p = 0; p < state.pages.length; p++) {
+    var tasks = state.pages[p].tasks;
+    for (var i = 0; i < tasks.length; i++) if (tasks[i].id === id) return p;
   }
+  return -1;
+}
+
+function findTask(id) {
+  var p = pageOfTask(id);
+  if (p < 0) return null;
+  var tasks = state.pages[p].tasks;
+  for (var i = 0; i < tasks.length; i++) if (tasks[i].id === id) return tasks[i];
   return null;
 }
 
@@ -358,9 +430,12 @@ function resetTask(task) {
   render();
 }
 
+/** Reset the CURRENT page's times. A task running on another page keeps running. */
 function resetAllTimes() {
-  state.runningId = null;
-  state.startedAt = null;
+  if (state.runningId !== null && pageOfTask(state.runningId) === state.page) {
+    state.runningId = null;
+    state.startedAt = null;
+  }
   for (var i = 0; i < state.tasks.length; i++) {
     state.tasks[i].accumulatedMs = 0;
     state.tasks[i].notified = false;
@@ -396,11 +471,87 @@ function removeTask() {
   render();
 }
 
+/* ------------------------------------------------------------------- pages */
+
+function pageName(index) {
+  var page = state.pages[index];
+  if (!page) return '';
+  return page.name ? page.name : t('pageDefault', { n: page.num || index + 1 });
+}
+
+/** Rename a page; blank goes back to the default "Page n". */
+function setPageName(index, name) {
+  var page = state.pages[index];
+  if (!page) return;
+  var trimmed = String(name || '').trim().slice(0, PAGE_NAME_MAX);
+  page.name = trimmed.length ? trimmed : null;
+  save();
+  render();
+}
+
+/** Show page `index`. The running task (on whatever page) is left alone. */
+function goToPage(index) {
+  if (index < 0 || index >= state.pages.length || index === state.page) return;
+  var forward = index > state.page;
+  closeTaskMenu();
+  syncBackdrop();
+  state.page = index;
+  state.tasks = state.pages[index].tasks;
+  save();
+  buildCards();
+  slideCards(forward);
+  render();
+}
+
+function addPage() {
+  if (state.pages.length >= MAX_PAGES) return;
+  state.pages.push(makePage(state.pages));
+  goToPage(state.pages.length - 1);
+}
+
+/** Delete page `index` (the current page by default). Always asks first.
+ *  Deleting another page keeps the shown page on screen. */
+function removePage(index) {
+  if (index === undefined) index = state.page;
+  if (state.pages.length <= MIN_PAGES || index < 0 || index >= state.pages.length) return;
+  if (!window.confirm(t('pageDeleteConfirm', { name: pageName(index) }))) return;
+  if (state.runningId !== null && pageOfTask(state.runningId) === index) {
+    // Discard the live segment: the task itself is going away.
+    state.runningId = null;
+    state.startedAt = null;
+  }
+  state.pages.splice(index, 1);
+  if (index < state.page) state.page--;
+  state.page = Math.min(state.page, state.pages.length - 1);
+  state.tasks = state.pages[state.page].tasks;
+  lastPageInputPage = -1;   // the name field now belongs to another page
+  save();
+  buildCards();
+  render();
+}
+
+/** Move a page to another place in the list; its name, tasks and times go with it. */
+function movePage(from, to) {
+  var n = state.pages.length;
+  if (from === to || from < 0 || to < 0 || from >= n || to >= n) return;
+  var shown = state.pages[state.page];
+  var page = state.pages.splice(from, 1)[0];
+  state.pages.splice(to, 0, page);
+  state.page = state.pages.indexOf(shown);   // the page on screen stays on screen
+  save();
+  render();
+}
+
 /* ------------------------------------------------------------------ storage */
 
 function save() {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // `state.tasks` is only a view of the current page, so it is not stored twice.
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      pages: state.pages, page: state.page, runningId: state.runningId, startedAt: state.startedAt,
+      soundId: state.soundId, autoStopExtraMin: state.autoStopExtraMin,
+      autoStopNoTargetMin: state.autoStopNoTargetMin
+    }));
   } catch (e) {
     /* Private mode / quota: keep running in memory. */
   }
@@ -445,35 +596,38 @@ function load() {
   } catch (e) {
     return defaultState();
   }
-  if (!parsed || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
-    return defaultState();
-  }
+  if (!parsed) return defaultState();
+  // Saved before v1.9.0: one set of tasks, which becomes page 1.
+  var rawPages = Array.isArray(parsed.pages) && parsed.pages.length ? parsed.pages
+    : (Array.isArray(parsed.tasks) && parsed.tasks.length ? [{ name: null, tasks: parsed.tasks }] : null);
+  if (!rawPages) return defaultState();
 
-  var tasks = [];
-  var count = Math.min(parsed.tasks.length, MAX_TASKS);
-  for (var i = 0; i < count; i++) {
-    var t = parsed.tasks[i] || {};
-    var acc = typeof t.accumulatedMs === 'number' && isFinite(t.accumulatedMs) && t.accumulatedMs > 0
-      ? t.accumulatedMs : 0;
-    var target = null;
-    if (t.targetMin !== null && t.targetMin !== undefined && t.targetMin !== '') {
-      var m = clampInt(t.targetMin, 0, 1440, null);
-      target = (m === null || m <= 0) ? null : m;
+  var pages = [];
+  var runningId = null;
+  for (var p = 0; p < rawPages.length && pages.length < MAX_PAGES; p++) {
+    var stored = rawPages[p] || {};
+    if (!Array.isArray(stored.tasks) || stored.tasks.length === 0) continue;
+    var tasks = loadTasks(stored.tasks);
+    // The stored id space is not the fresh one, so map the running task by position.
+    for (var j = 0; j < tasks.length; j++) {
+      if (runningId === null && typeof parsed.runningId === 'number' &&
+          stored.tasks[j] && stored.tasks[j].id === parsed.runningId) {
+        runningId = tasks[j].id;
+      }
     }
-    tasks.push({
-      id: nextTaskId++,
-      name: typeof t.name === 'string' && t.name.length ? t.name.slice(0, 24) : t('taskDefault', { x: NAME_LETTERS[i] || String(i + 1) }),
-      accumulatedMs: acc,
-      targetMin: target,
-      notified: t.notified === true,
-      autoStopped: t.autoStopped === true,
-      // saved before v1.7.0: colours followed the position, so keep that look
-      color: clampInt(t.color, 0, 5, i % 6)
-    });
+    var name = typeof stored.name === 'string' ? stored.name.trim().slice(0, PAGE_NAME_MAX) : '';
+    // Data saved before v1.9.0 has no `num`: this gives 1, 2, 3… in page order.
+    var num = clampInt(stored.num, 1, 99, 0);
+    if (!num || pages.some(function (other) { return other.num === num; })) num = freePageNum(pages);
+    pages.push({ name: name.length ? name : null, num: num, tasks: tasks });
   }
+  if (pages.length === 0) return defaultState();
+  var page = clampInt(parsed.page, 0, pages.length - 1, 0);
 
   var restored = {
-    tasks: tasks,
+    pages: pages,
+    page: page,
+    tasks: pages[page].tasks,
     runningId: null,
     startedAt: null,
     soundId: findSound(parsed.soundId).id,
@@ -483,17 +637,39 @@ function load() {
                                     DEFAULT_AUTO_STOP_NO_TARGET_MIN)
   };
 
-  // The stored id space is not the fresh one, so map by position.
-  var runningIndex = -1;
-  for (var j = 0; j < count; j++) {
-    if (parsed.tasks[j] && parsed.tasks[j].id === parsed.runningId) { runningIndex = j; break; }
-  }
   var startedAt = typeof parsed.startedAt === 'number' && isFinite(parsed.startedAt) ? parsed.startedAt : null;
-  if (runningIndex >= 0 && startedAt !== null && startedAt <= Date.now()) {
-    restored.runningId = tasks[runningIndex].id;
+  if (runningId !== null && startedAt !== null && startedAt <= Date.now()) {
+    restored.runningId = runningId;
     restored.startedAt = startedAt;
   }
   return restored;
+}
+
+/** Restore one page's tasks from stored data (fresh ids, sane values). */
+function loadTasks(stored) {
+  var tasks = [];
+  var count = Math.min(stored.length, MAX_TASKS);
+  for (var i = 0; i < count; i++) {
+    var saved = stored[i] || {};
+    var acc = typeof saved.accumulatedMs === 'number' && isFinite(saved.accumulatedMs) && saved.accumulatedMs > 0
+      ? saved.accumulatedMs : 0;
+    var target = null;
+    if (saved.targetMin !== null && saved.targetMin !== undefined && saved.targetMin !== '') {
+      var m = clampInt(saved.targetMin, 0, 1440, null);
+      target = (m === null || m <= 0) ? null : m;
+    }
+    tasks.push({
+      id: nextTaskId++,
+      name: typeof saved.name === 'string' && saved.name.length ? saved.name.slice(0, 24) : t('taskDefault', { x: NAME_LETTERS[i] || String(i + 1) }),
+      accumulatedMs: acc,
+      targetMin: target,
+      notified: saved.notified === true,
+      autoStopped: saved.autoStopped === true,
+      // saved before v1.7.0: colours followed the position, so keep that look
+      color: clampInt(saved.color, 0, 5, i % 6)
+    });
+  }
+  return tasks;
 }
 
 /* ----------------------------------------------------------------- format */
@@ -1334,6 +1510,7 @@ function bindCard(card, task, index) {
 function render() {
   checkAutoStop();
   var running = state.runningId !== null;
+  checkOverruns();
 
   for (var i = 0; i < state.tasks.length; i++) {
     var task = state.tasks[i];
@@ -1359,18 +1536,9 @@ function render() {
       card.lastRunning = isRunning;
     }
 
-    // Target-time overrun: warn loudly, but never stop counting.
+    // Target-time overrun: warn loudly, but never stop counting (alerts: checkOverruns).
     var targetMs = task.targetMin === null ? null : task.targetMin * 60000;
     var isOver = targetMs !== null && ms >= targetMs;
-
-    if (isOver && !task.notified) {
-      task.notified = true;
-      beep();
-      save();
-    } else if (!isOver && task.notified) {
-      task.notified = false;
-      save();
-    }
 
     if (isOver !== card.lastIsOver) {
       card.time.classList.toggle('over', isOver);
@@ -1406,7 +1574,358 @@ function render() {
   els.taskMinus.disabled = state.tasks.length <= MIN_TASKS;
   els.taskPlus.disabled = state.tasks.length >= MAX_TASKS;
 
+  renderPageNav();
+  renderPageList();
   updateTitle(running);
+}
+
+/** Beep once when a task passes its target. Runs over EVERY page, so a task
+ *  left running on another page still alerts. */
+function checkOverruns() {
+  var tasks = allTasks();
+  for (var i = 0; i < tasks.length; i++) {
+    var task = tasks[i];
+    var isOver = task.targetMin !== null && elapsedOf(task) >= task.targetMin * 60000;
+    if (isOver && !task.notified) {
+      task.notified = true;
+      beep();
+      save();
+    } else if (!isOver && task.notified) {
+      task.notified = false;
+      save();
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- page UI */
+
+var SWIPE_PX = 60;        // a swipe must travel this far sideways...
+var SWIPE_RATIO = 1.5;    // ...mostly sideways...
+var SWIPE_MS = 600;       // ...and quickly, or it is not a page change
+var NARROW_QUERY = '(max-width: 700px)';   // the page list overlays the cards here
+
+var lastPageNav = '';
+var lastPageInputPage = -1;
+var pageListOpen = false;
+var lastPageList = '';
+var pageListTimes = [];   // [{el, task, text}] times shown in the page list
+
+/** Page of the running task, or -1. */
+function runningPage() {
+  return state.runningId === null ? -1 : pageOfTask(state.runningId);
+}
+
+/** ‹ name ●○○ › at the bottom. On the last page › becomes + (add a page). */
+function renderPageNav() {
+  var last = state.page === state.pages.length - 1;
+  var key = [state.page, state.pages.length, runningPage(), pageName(state.page), I18N.lang()].join('|');
+  if (key === lastPageNav) return;
+  lastPageNav = key;
+
+  els.pageName.textContent = pageName(state.page);
+  els.pagePrev.disabled = state.page === 0;
+  var nextLabel = t(last ? 'pageAdd' : 'pageNext');
+  els.pageNext.textContent = last ? '＋' : '›';
+  els.pageNext.title = nextLabel;
+  els.pageNext.setAttribute('aria-label', nextLabel);
+  els.pageNext.disabled = last && state.pages.length >= MAX_PAGES;
+
+  els.pageDots.textContent = '';
+  var run = runningPage();
+  for (var i = 0; i < state.pages.length; i++) {
+    var dot = document.createElement('span');
+    dot.className = 'page-dot' + (i === state.page ? ' current' : '') + (i === run ? ' running' : '');
+    els.pageDots.appendChild(dot);
+  }
+
+  els.pageDelete.disabled = state.pages.length <= MIN_PAGES;
+  els.pageNameInput.placeholder = t('pageDefault', { n: state.page + 1 });
+  if (lastPageInputPage !== state.page) {   // never overwrite while the user is typing
+    els.pageNameInput.value = state.pages[state.page].name || '';
+    lastPageInputPage = state.page;
+  }
+}
+
+/** The page list: one thumbnail per page (its tasks, colours and times), like a
+ *  slide sorter. Rebuilt when its content changes; the times refresh on every render. */
+function renderPageList() {
+  if (!pageListOpen) return;
+  var run = runningPage();
+  var key = JSON.stringify([state.page, run, I18N.lang(), state.pages.map(function (page, i) {
+    return [pageName(i), page.tasks.map(function (task) { return [task.id, task.name, task.color]; })];
+  })]);
+  if (key !== lastPageList && !pageDrag) {   // never rebuild under a dragged thumbnail
+    lastPageList = key;
+    buildPageList(run);
+  }
+  for (var i = 0; i < pageListTimes.length; i++) {
+    var item = pageListTimes[i];
+    var text = formatDuration(elapsedOf(item.task));
+    if (text !== item.text) { item.el.textContent = text; item.text = text; }
+  }
+}
+
+function buildPageList(run) {
+  els.pageListItems.textContent = '';
+  pageListTimes = [];
+  state.pages.forEach(function (page, index) {
+    var thumb = document.createElement('button');
+    thumb.type = 'button';
+    thumb.className = 'page-thumb' + (index === state.page ? ' current' : '') + (index === run ? ' has-running' : '');
+    if (index === state.page) thumb.setAttribute('aria-current', 'page');
+
+    var num = document.createElement('span');
+    num.className = 'page-thumb-num';
+    num.textContent = String(index + 1);
+    thumb.appendChild(num);
+
+    var body = document.createElement('span');
+    body.className = 'page-thumb-body';
+    var head = document.createElement('span');
+    head.className = 'page-thumb-name';
+    var name = document.createElement('span');
+    name.className = 'page-thumb-title';
+    name.textContent = pageName(index);
+    head.appendChild(name);
+    if (index === run) {
+      var mark = document.createElement('span');
+      mark.className = 'page-thumb-run';
+      mark.textContent = '● ' + t('pageRunning');
+      head.appendChild(mark);
+    }
+    body.appendChild(head);
+
+    var grid = document.createElement('span');
+    grid.className = 'page-thumb-tasks';
+    grid.style.setProperty('--cols', String(Math.min(page.tasks.length, 3)));
+    page.tasks.forEach(function (task) {
+      var cell = document.createElement('span');
+      cell.className = 'page-thumb-task' + (task.id === state.runningId ? ' running' : '');
+      cell.setAttribute('data-color', String(task.color));
+      var taskName = document.createElement('span');
+      taskName.className = 'ptt-name';
+      taskName.textContent = task.name || t('untitled');
+      var time = document.createElement('span');
+      time.className = 'ptt-time';
+      cell.appendChild(taskName);
+      cell.appendChild(time);
+      grid.appendChild(cell);
+      pageListTimes.push({ el: time, task: task, text: '' });
+    });
+    body.appendChild(grid);
+    thumb.appendChild(body);
+
+    thumb.addEventListener('click', function () {
+      if (Date.now() < suppressPageClickUntil) return;   // the click that ends a drag
+      goToPage(index);
+      if (isNarrow()) setPageListOpen(false);
+    });
+
+    // A button may not sit inside a button, so the × is the thumbnail's sibling.
+    var item = document.createElement('div');
+    item.className = 'page-thumb-item';
+    item.appendChild(thumb);
+    bindPageDrag(item, index);
+    if (state.pages.length > MIN_PAGES) {
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'page-thumb-delete';
+      del.textContent = '×';
+      var delLabel = t('pageDeleteNamed', { name: pageName(index) });
+      del.title = delLabel;
+      del.setAttribute('aria-label', delLabel);
+      del.addEventListener('click', function (event) {
+        event.stopPropagation();
+        removePage(index);
+      });
+      item.appendChild(del);
+    }
+    els.pageListItems.appendChild(item);
+  });
+  els.pageListAdd.disabled = state.pages.length >= MAX_PAGES;
+}
+
+/* Reorder pages in the list: long-press a thumbnail (as with the cards), drag it
+ * up or down, let go. The other thumbnails slide to show where it will land. */
+var pageDrag = null;
+var suppressPageClickUntil = 0;
+
+function bindPageDrag(item, index) {
+  item.addEventListener('pointerdown', function (event) {
+    if (event.button !== undefined && event.button !== 0) return;
+    if (pageDrag || (event.target.closest && event.target.closest('.page-thumb-delete'))) return;
+    pageDrag = { item: item, from: index, to: index, startX: event.clientX, startY: event.clientY,
+                 pointerId: event.pointerId, active: false, timer: null, items: [], slots: [] };
+    pageDrag.timer = setTimeout(function () {
+      if (!pageDrag || pageDrag.item !== item) return;
+      pageDrag.active = true;
+      pageDrag.items = Array.prototype.slice.call(els.pageListItems.children);
+      pageDrag.slots = pageDrag.items.map(function (el) { return el.getBoundingClientRect(); });
+      item.classList.add('dragging');
+      els.pageListItems.classList.add('reordering');
+      try { item.setPointerCapture(pageDrag.pointerId); } catch (e) { /* ignore */ }
+    }, LONG_PRESS_MS);
+  });
+  item.addEventListener('pointermove', function (event) {
+    if (!pageDrag || pageDrag.item !== item) return;
+    var dx = event.clientX - pageDrag.startX;
+    var dy = event.clientY - pageDrag.startY;
+    if (!pageDrag.active) {
+      if (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX) endPageDrag(false);
+      return;
+    }
+    item.style.transform = 'translateY(' + dy + 'px)';
+    var to = pageSlotAt(event.clientY);
+    if (to !== pageDrag.to) {
+      pageDrag.to = to;
+      previewPageOrder(to);
+    }
+  });
+  item.addEventListener('pointerup', function () { if (pageDrag && pageDrag.item === item) endPageDrag(true); });
+  item.addEventListener('pointercancel', function () { if (pageDrag && pageDrag.item === item) endPageDrag(false); });
+  // While a thumbnail is held, the list must not scroll under the finger (iPad).
+  item.addEventListener('touchmove', function (event) {
+    if (pageDrag && pageDrag.active) event.preventDefault();
+  }, { passive: false });
+  item.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+}
+
+/** The slot under y: the last one whose top half the pointer has passed. */
+function pageSlotAt(y) {
+  var slots = pageDrag.slots;
+  var to = 0;
+  for (var i = 0; i < slots.length; i++) {
+    if (y >= slots[i].top + slots[i].height / 2 || (i === 0 && y < slots[0].top)) to = i;
+  }
+  return to;
+}
+
+function previewPageOrder(to) {
+  var d = pageDrag;
+  for (var i = 0; i < d.items.length; i++) {
+    if (i === d.from) continue;
+    var p = i;
+    if (d.from < to && i > d.from && i <= to) p = i - 1;
+    if (d.from > to && i >= to && i < d.from) p = i + 1;
+    var dy = d.slots[p].top - d.slots[i].top;
+    d.items[i].style.transform = dy ? 'translateY(' + dy + 'px)' : '';
+  }
+}
+
+function endPageDrag(commit) {
+  if (!pageDrag) return;
+  var d = pageDrag;
+  pageDrag = null;
+  clearTimeout(d.timer);
+  if (!d.active) return;
+  suppressPageClickUntil = Date.now() + 400;
+  d.item.classList.remove('dragging');
+  els.pageListItems.classList.remove('reordering');
+  d.items.forEach(function (el) { el.style.transform = ''; });
+  if (commit) movePage(d.from, d.to);
+}
+
+function isNarrow() {
+  return typeof window.matchMedia === 'function' && window.matchMedia(NARROW_QUERY).matches;
+}
+
+function setPageListOpen(open) {
+  pageListOpen = open;
+  els.pageList.hidden = !open;
+  if (document.body) document.body.classList.toggle('page-list-open', open);
+  els.pageListBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  els.pageListBtn.classList.toggle('on', open);
+  try { window.localStorage.setItem(PAGE_LIST_KEY, open ? 'open' : 'closed'); } catch (e) { /* ignore */ }
+  lastPageList = '';
+  renderPageList();
+}
+
+/** Brief sideways slide of the cards, so a page change is visible. */
+function slideCards(forward) {
+  var list = els.tasks.classList;
+  list.remove('slide-next');
+  list.remove('slide-prev');
+  void els.tasks.offsetWidth;   // restart the animation
+  list.add(forward ? 'slide-next' : 'slide-prev');
+}
+
+/** Swipe left / right over the cards (touch) to change page. Never adds a page,
+ *  so a stray swipe on the last page cannot create one. */
+function bindSwipe(area) {
+  var start = null;
+  area.addEventListener('touchstart', function (event) {
+    start = null;
+    if (!event.touches || event.touches.length !== 1 || openMenuIndex >= 0) return;
+    if (isMenuTarget(event.target)) return;
+    start = { x: event.touches[0].clientX, y: event.touches[0].clientY, at: Date.now() };
+  }, { passive: true });
+  area.addEventListener('touchend', function (event) {
+    var from = start;
+    start = null;
+    if (!from || (drag && drag.active) || !event.changedTouches || !event.changedTouches.length) return;
+    var dx = event.changedTouches[0].clientX - from.x;
+    var dy = event.changedTouches[0].clientY - from.y;
+    if (Date.now() - from.at > SWIPE_MS || Math.abs(dx) < SWIPE_PX ||
+        Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) return;
+    // A swipe is never a tap on a card, even at the first or last page.
+    suppressClickUntil = Date.now() + 400;
+    var to = state.page + (dx < 0 ? 1 : -1);
+    if (to >= 0 && to < state.pages.length) goToPage(to);
+  }, { passive: true });
+}
+
+/* Two-finger sideways scroll on a trackpad (a sideways wheel) also changes page.
+ * One gesture is a burst of wheel events plus momentum, so it turns at most one
+ * page, and the next turn waits until the events have paused. Like a swipe, it
+ * never adds a page. preventDefault keeps Chrome / Safari from going "back". */
+var WHEEL_PAGE_PX = 80;      // sideways travel that counts as a page turn
+var WHEEL_IDLE_MS = 300;     // a pause this long ends the gesture
+
+function bindWheelPaging(area) {
+  var travel = 0;
+  var turned = false;
+  var idleTimer = null;
+  area.addEventListener('wheel', function (event) {
+    if (event.ctrlKey || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;   // pinch / vertical
+    event.preventDefault();
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { travel = 0; turned = false; }, WHEEL_IDLE_MS);
+    if (turned) return;
+    travel += event.deltaMode === 1 ? event.deltaX * 16 : event.deltaX;   // lines -> px
+    if (Math.abs(travel) < WHEEL_PAGE_PX) return;
+    turned = true;
+    var to = state.page + (travel > 0 ? 1 : -1);
+    if (to >= 0 && to < state.pages.length) goToPage(to);
+  }, { passive: false });
+}
+
+function initPages() {
+  els.pagePrev.addEventListener('click', function () { goToPage(state.page - 1); });
+  els.pageNext.addEventListener('click', function () {
+    if (state.page === state.pages.length - 1) addPage();
+    else goToPage(state.page + 1);
+  });
+  els.pageListBtn.addEventListener('click', function () { setPageListOpen(!pageListOpen); });
+  // Adding keeps the list open, so the new page shows up in it.
+  els.pageListAdd.addEventListener('click', addPage);
+  // A tap outside the open list closes it. That tap does not also start or stop a task.
+  document.addEventListener('pointerdown', function (event) {
+    if (!pageListOpen || !event.target || typeof event.target.closest !== 'function') return;
+    if (event.target.closest('#page-list, #page-list-btn')) return;
+    if (!document.contains(event.target)) return;   // e.g. a thumbnail just rebuilt away
+    setPageListOpen(false);
+    if (event.target.closest('.card')) suppressClickUntil = Date.now() + 400;
+  });
+  els.pageNameInput.addEventListener('input', function () {
+    setPageName(state.page, els.pageNameInput.value);
+  });
+  els.pageDelete.addEventListener('click', function () { removePage(); });
+  bindSwipe(els.taskArea);
+  bindWheelPaging(els.taskArea);
+  var open = false;
+  try { open = window.localStorage.getItem(PAGE_LIST_KEY) === 'open'; } catch (e) { /* ignore */ }
+  // A narrow screen starts with the list closed: there it covers the cards.
+  setPageListOpen(open && !isNarrow());
 }
 
 var lastTitle = '';
@@ -1589,7 +2108,7 @@ function sendFeedback(event) {
 /** Delete everything this app keeps in the browser and start over. */
 function clearSavedData() {
   if (!window.confirm(t('c.clearConfirm'))) return;
-  [STORAGE_KEY, SEEN_VERSION_KEY, LANG_KEY].forEach(function (key) {
+  [STORAGE_KEY, SEEN_VERSION_KEY, LANG_KEY, PAGE_LIST_KEY].forEach(function (key) {
     try { window.localStorage.removeItem(key); } catch (e) { /* ignore */ }
   });
   window.location.reload();
@@ -1611,6 +2130,7 @@ function applyLanguage() {
     cards[i].lastName = cards[i].lastTargetView = cards[i].lastOver = '';
   }
   lastTargetTotal = '';
+  lastPageNav = lastPageList = '';
   render();
 }
 
@@ -1656,6 +2176,11 @@ function onKeyDown(event) {
     if (tag === 'SELECT') return;   // a focused dropdown (e.g. language) keeps its own keys
     event.preventDefault();
     openHelp();
+    return;
+  }
+  if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && tag !== 'SELECT') {
+    event.preventDefault();
+    goToPage(state.page + (event.key === 'ArrowRight' ? 1 : -1));
     return;
   }
   if (event.key === ' ' || event.key === 'Spacebar') {
@@ -1779,6 +2304,17 @@ function init() {
   els.feedbackStatus = document.getElementById('feedbackStatus');
   els.feedbackSend = document.getElementById('feedbackSend');
   els.feedbackClose = document.getElementById('feedbackClose');
+  els.taskArea = document.getElementById('task-area');
+  els.pageName = document.getElementById('page-name');
+  els.pageDots = document.getElementById('page-dots');
+  els.pagePrev = document.getElementById('page-prev');
+  els.pageNext = document.getElementById('page-next');
+  els.pageListBtn = document.getElementById('page-list-btn');
+  els.pageList = document.getElementById('page-list');
+  els.pageListItems = document.getElementById('page-list-items');
+  els.pageListAdd = document.getElementById('page-list-add');
+  els.pageNameInput = document.getElementById('page-name-input');
+  els.pageDelete = document.getElementById('page-delete');
 
   // Before anything is built: default task names and labels use the language.
   I18N.init(LANG_KEY, STRINGS);
@@ -1786,6 +2322,7 @@ function init() {
   state = load();
   buildCards();
   render();
+  initPages();
 
   els.stopAll.addEventListener('click', function () {
     unlockAudio();

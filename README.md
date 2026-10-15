@@ -18,6 +18,7 @@ It runs entirely in the browser. Nothing to install, no server communication.
 - Auto-stop as a safety net for forgetting to stop
 - Total time of all tasks, Japanese / English, works on PC and iPad
 - Reorder tasks: press and hold a card, then drag it (the other cards make room as you move)
+- Pages: keep a set of tasks per page (e.g. A, B, C in the morning and D, E in the afternoon); the page list shows every page's times
 - **FB** button in the header: send feedback or a bug report to the developer
 
 ---
@@ -42,6 +43,17 @@ Close the settings window by **tapping outside it** or with <kbd>Esc</kbd>.
 - **Target time** (set as "◯ h ◯ min")
 - **Reset only this task's time**
 
+### Pages (‹ › at the bottom)
+
+When the tasks you juggle change through the day, put each set on its own page.
+
+- **‹ ›** at the bottom switch pages. On iPad you can also **swipe left / right** over the tasks, and on a trackpad **scroll sideways with two fingers** (<kbd>←</kbd> <kbd>→</kbd> on a keyboard).
+- On the last page **›** becomes **+**, which adds a new page with three tasks. Up to 5 pages.
+- **▤** at the bottom left opens the **page list**: every page's tasks and times as small thumbnails; tap one to go there. The **×** at a page's top right deletes it (after asking). **Press and hold** a page and drag it up or down to change the order (its name moves with it). Tap outside the list to close it.
+- Rename a page (by default "Page 1", "Page 2", …) in ⚙; the current page can also be deleted there.
+- A running task **keeps running when you change pages** (the list and the dots mark it). Only one task runs across all pages.
+- The **total** at the top, the **task count** and "**Reset all to 00:00:00**" in ⚙ apply to the **current page only**.
+
 ### How to use window (? in the header)
 
 The **?** button just left of ⚙ (or the <kbd>?</kbd> key) opens the instructions.
@@ -52,10 +64,11 @@ Close it with "Close", by tapping outside it, or with <kbd>Esc</kbd>.
 The **⚙** at the right of the header opens the app-wide settings.
 
 - **Language** … Japanese / English.
-- **Tasks** … `−` / `＋` sets **1 to 6** tasks (3 by default). Removing a task that has recorded time asks for confirmation.
+- **Page name** / **Delete this page** … rename the current page (leave it blank for "Page n"). Deleting always asks first.
+- **Tasks** … `−` / `＋` sets **1 to 6** tasks on the current page (3 by default). Removing a task that has recorded time asks for confirmation.
 - **Alert sound** … the overrun sound and a "Test sound" button.
 - **Auto-stop** … a safety net for forgetting to stop. It stops a task that keeps running (see below).
-- **Reset all times to 00:00:00** … resets every task's time (task names and target times are kept).
+- **Reset all times to 00:00:00** … resets the time of every task on the current page (task names and target times are kept).
 - **Share** … QR codes for the app and its source.
 - **Changelog** … shows the changes per version, newest first. The first time you open a new version, ⚙ gets a red dot, which disappears once you open the changelog. Tapping the version next to the app name opens it too.
 - **Other apps** … opens the list of apps.

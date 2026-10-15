@@ -45,12 +45,34 @@
           title="設定" aria-label="設定" aria-expanded="false">⚙</button>
 </header>
 
-<main>
-  <div id="tasks" class="tasks"></div>
-</main>
+<div class="workspace">
+  <!-- Page list: one thumbnail per page, like a slide sorter. Opened by ▤ at the bottom. -->
+  <aside id="page-list" class="page-list" hidden data-i18n-aria-label="pageList" aria-label="ページ一覧">
+    <div id="page-list-items" class="page-list-items"></div>
+    <button id="page-list-add" class="btn page-list-add" type="button" data-i18n="pageAdd">ページを追加</button>
+  </aside>
+  <main id="task-area">
+    <div id="tasks" class="tasks"></div>
+  </main>
+</div>
 
 <footer class="app-footer">
   <span id="target-total" class="target-total"></span>
+  <nav class="page-nav">
+    <button id="page-list-btn" class="btn btn-icon page-list-btn" type="button" aria-expanded="false"
+            data-i18n-title="pageList" data-i18n-aria-label="pageList" title="ページ一覧" aria-label="ページ一覧">
+      <svg class="pl-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="3" y="15" width="6" height="5" rx="1"/><path d="M12 6.5h9M12 17.5h9"/></svg>
+    </button>
+    <div class="page-switch">
+      <button id="page-prev" class="btn btn-icon page-arrow" type="button"
+              data-i18n-title="pagePrev" data-i18n-aria-label="pagePrev" title="前のページ" aria-label="前のページ">‹</button>
+      <div class="page-info">
+        <span id="page-name" class="page-name"></span>
+        <span id="page-dots" class="page-dots" aria-hidden="true"></span>
+      </div>
+      <button id="page-next" class="btn btn-icon page-arrow" type="button" title="次のページ" aria-label="次のページ">›</button>
+    </div>
+  </nav>
 </footer>
 
 <!-- Settings sheet. The common rows (language, share, changelog, other apps,
@@ -70,6 +92,17 @@
       <option value="ja">日本語</option>
       <option value="en">English</option>
     </select>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label" data-i18n="pageName">ページ名</span>
+    <input id="page-name-input" class="page-name-input" type="text" maxlength="24"
+           data-i18n-aria-label="pageName" aria-label="ページ名">
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label" data-i18n="thisPage">このページ</span>
+    <button id="page-delete" class="btn btn-danger" type="button" data-i18n="pageDelete">このページを削除</button>
   </div>
 
   <div class="sheet-row">

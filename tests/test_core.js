@@ -84,6 +84,7 @@ function makeAudioStub() {
 }
 
 let lastAudio = null;
+let audios = [];
 
 let NOW = 1700000000000;
 let activeIntervals = 0;
@@ -99,7 +100,8 @@ function makeContext(store) {
    'feedback-btn', 'feedbackOverlay', 'feedbackForm', 'feedbackMessage', 'feedbackContact',
    'feedbackWebsite', 'feedbackStatus', 'feedbackSend', 'feedbackClose',
    'task-area', 'page-name', 'page-dots', 'page-prev', 'page-next', 'page-list-btn', 'page-list',
-   'page-list-items', 'page-list-add', 'page-name-input', 'page-delete']
+   'page-list-items', 'page-list-add', 'page-name-input', 'page-delete',
+   'pre-alert', 'state-save', 'state-load', 'state-file-input']
     .forEach(id => { byId[id] = makeEl('div'); });
   byId.tasks.textContent = '';
 
@@ -129,7 +131,7 @@ function makeContext(store) {
     location: { reload() { windowStub.reloaded = true; } },
     confirm() { return true; },
     btoa(s) { return Buffer.from(s, 'binary').toString('base64'); },
-    Audio: function (src) { lastAudio = makeAudioStub(); lastAudio.src = src; return lastAudio; },
+    Audio: function (src) { lastAudio = makeAudioStub(); lastAudio.src = src; audios.push(lastAudio); return lastAudio; },
     setInterval() { activeIntervals++; return activeIntervals; },
     clearInterval() { activeIntervals--; },
     setTimeout() { return 0; },
@@ -417,8 +419,12 @@ check('the minute wheel is stacked for wrapping',
 
 console.log('\n[19] the unlocking play is never heard');
 const ctx11 = makeContext({});
-lastAudio = null;
+audios = [];
 ctx11.unlockAudio();
+check('alert and heads-up elements built', audios.length === 2, audios.length);
+check('the heads-up element is unlocked too',
+  audios[1] && audios[1].calls.join(',') === 'play,pause', audios[1] && audios[1].calls.join(','));
+lastAudio = audios[0];   // the alert clip
 check('an audio element was built', lastAudio !== null);
 check('it is a wav data URI', /^data:audio\/wav;base64,/.test(lastAudio.src),
   String(lastAudio.src).slice(0, 30));
@@ -572,7 +578,7 @@ ctxI.__els['lang-select'].handlers.change[0]();
 check('switched to English', ctxI.I18N.lang() === 'en');
 check('en duration', ctxI.formatTargetLabel(90) === '1 h 30 min', ctxI.formatTargetLabel(90));
 check('<html lang> follows', ctxI.__doc.documentElement.lang === 'en', ctxI.__doc.documentElement.lang);
-check('changelog rebuilt in English', /keep sets of tasks on separate pages/.test(
+check('changelog rebuilt in English', /short sound now warns you shortly before a target/.test(
   ctxI.__els.changelogList.children[0].children[1].children[0].textContent));
 check('sound names in English', ctxI.__els['sound-select'].children[0].textContent === 'Chime (3 notes)',
   ctxI.__els['sound-select'].children[0].textContent);
@@ -755,6 +761,101 @@ keyHandler({ key: 'ArrowRight', target: { tagName: 'BODY' }, preventDefault() {}
 check('→ goes to the next page', ctxK.state.page === 1);
 keyHandler({ key: 'ArrowRight', target: { tagName: 'BODY' }, preventDefault() {} });
 check('→ on the last page does not add one', ctxK.state.pages.length === 2);
+
+console.log('\n[26] heads-up before the target');
+const M = 60 * 1000;
+const ctxH = makeContext({});
+check('default heads-up: 5 min before', ctxH.state.preAlert === 'm5', ctxH.state.preAlert);
+check('heads-up select filled', ctxH.__els['pre-alert'].children.length === ctxH.PRE_ALERT_CHOICES.length);
+const [T1, T2] = ctxH.state.tasks;
+T1.targetMin = 30;
+check('lead 5 min on a 30 min target', ctxH.preAlertLeadMs(T1) === 5 * M);
+T2.targetMin = 3;
+check('lead longer than the target: none', ctxH.preAlertLeadMs(T2) === null);
+ctxH.state.preAlert = 'p20';
+check('20% of 30 min = 6 min', ctxH.preAlertLeadMs(T1) === 6 * M);
+ctxH.state.preAlert = 'off';
+check('off: none', ctxH.preAlertLeadMs(T1) === null);
+ctxH.state.preAlert = 'm5';
+ctxH.unlockAudio();
+const preEl = audios[audios.length - 1];
+const alertEl = audios[audios.length - 2];
+ctxH.toggleTask(T1.id);
+NOW += 25 * M - 1000;
+ctxH.render();
+check('quiet just before the heads-up', !T1.preNotified);
+const preBefore = preEl.calls.length;
+NOW += 1000;
+ctxH.render();
+check('heads-up at target - 5 min', T1.preNotified && preEl.calls.length === preBefore + 1);
+ctxH.render();
+check('heads-up only once', preEl.calls.length === preBefore + 1);
+const alertBefore = alertEl.calls.length;
+NOW += 5 * M;
+ctxH.render();
+check('overrun alert still sounds at the target', T1.notified && alertEl.calls.length === alertBefore + 1);
+check('no second heads-up at the target', preEl.calls.length === preBefore + 1);
+ctxH.stopAll();
+ctxH.toggleTask(T2.id);                         // 3 min target: lead 5 min is skipped
+NOW += 3 * M;
+ctxH.render();
+check('short target: no heads-up, overrun only', !T2.preNotified && T2.notified &&
+  preEl.calls.length === preBefore + 1);
+ctxH.stopAll();
+const T3 = ctxH.state.tasks[2];
+T3.targetMin = 10;
+ctxH.toggleTask(T3.id);
+NOW += 20 * M;                                  // asleep past the target
+ctxH.render();
+check('past the target on wake: overrun alert, no heads-up', T3.notified && T3.preNotified &&
+  preEl.calls.length === preBefore + 1);
+const storeHP = {};
+const ctxHP = makeContext(storeHP);
+ctxHP.state.preAlert = 'p10';
+ctxHP.save();
+check('heads-up setting survives a reload', makeContext(storeHP).state.preAlert === 'p10');
+
+console.log('\n[27] state file');
+const ctxS = makeContext({});
+ctxS.addPage();
+ctxS.setPageName(1, '午後');
+ctxS.state.tasks[0].name = 'メール';
+ctxS.state.tasks[0].targetMin = 45;
+ctxS.state.soundId = 'bell';
+ctxS.state.autoStopNoTargetMin = 600;
+ctxS.state.preAlert = 'm10';
+const run = ctxS.state.tasks[1];
+ctxS.toggleTask(run.id);
+NOW += 90 * 1000;
+const file = ctxS.exportState();
+check('file names the app and format', file.app === 'multitask-timer' && file.format === 1);
+check('running task written stopped', file.state.runningId === null && file.state.startedAt === null);
+check('running task written with its time now',
+  file.state.pages[1].tasks[1].accumulatedMs === 90 * 1000, file.state.pages[1].tasks[1].accumulatedMs);
+check('this device keeps running', ctxS.state.runningId === run.id);
+
+const ctxImp = makeContext({});
+ctxImp.toggleTask(ctxImp.state.tasks[0].id);
+const text = JSON.stringify(file);
+NOW += 10 * 60 * 1000;                          // carried over for 10 min
+check('import succeeds', ctxImp.importState(text) === true);
+check('pages and names come back', ctxImp.state.pages.length === 2 && ctxImp.pageName(1) === '午後');
+check('shown page comes back', ctxImp.state.page === 1);
+check('task name and target come back', ctxImp.state.pages[1].tasks[0].name === 'メール' &&
+  ctxImp.state.pages[1].tasks[0].targetMin === 45);
+check('settings come back', ctxImp.state.soundId === 'bell' && ctxImp.state.autoStopNoTargetMin === 600 &&
+  ctxImp.state.preAlert === 'm10');
+check('nothing running after import', ctxImp.state.runningId === null);
+check('carried time did not count', ctxImp.elapsedOf(ctxImp.state.pages[1].tasks[1]) === 90 * 1000,
+  ctxImp.elapsedOf(ctxImp.state.pages[1].tasks[1]));
+check('settings controls follow', ctxImp.__els['pre-alert'].value === 'm10' &&
+  ctxImp.__els['sound-select'].value === 'bell');
+check('cards rebuilt for the shown page', ctxImp.__els.tasks.children.length === ctxImp.state.tasks.length);
+const before = JSON.stringify(ctxImp.storedState());
+check('not JSON: refused', ctxImp.importState('hello') === false);
+check('another app\'s file: refused', ctxImp.importState(JSON.stringify({ app: 'other', state: file.state })) === false);
+check('empty state: refused', ctxImp.importState(JSON.stringify({ app: 'multitask-timer', state: { pages: [] } })) === false);
+check('a refused file changes nothing', JSON.stringify(ctxImp.storedState()) === before);
 
 console.log(failures === 0 ? '\nALL PASS\n' : '\n' + failures + ' FAILURE(S)\n');
 process.exit(failures === 0 ? 0 : 1);

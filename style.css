@@ -789,6 +789,8 @@ main {
 
 .sheet-label { font-size: .9rem; }
 
+.sheet-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
 .sound-select {
   font: inherit;
   color: var(--text);

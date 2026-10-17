@@ -19,7 +19,7 @@
 /* Single source of truth for the version and the URLs. The QR images encode
  * these same URLs, and the deploy check greps APP_VERSION out of the published
  * file — so bump it here and nowhere else. */
-var APP_VERSION = '1.9.0';
+var APP_VERSION = '1.10.0';
 var APP_URL = 'https://yukmmz.github.io/multitask-timer/';
 var SRC_URL = 'https://github.com/yukmmz/multitask-timer';
 /* Shared feedback endpoint (Google Apps Script web app, one for every yukmmz.github.io app).
@@ -32,6 +32,12 @@ var APP_ID = 'multitask-timer';
  * here: the test checks that the first entry matches APP_VERSION. Written for
  * users, in both languages. */
 var CHANGELOG = [
+  { version: '1.10.0', date: '2026-10-17', items: [
+    { ja: 'ご要望を受けて、目安時間の少し前にも短い音でお知らせするようにしました。何分前か（または目安の何％前か）は設定（⚙）の「予告」で変えられます（初期設定は5分前）',
+      en: 'By request: a short sound now warns you shortly before a target. Choose how early (minutes, or a share of the target) under "Heads-up" in the settings (⚙); the default is 5 minutes' },
+    { ja: 'ご要望を受けて、今の状態（全ページのタスク・時間・設定）をファイルに保存し、別の端末で読み込んで同じ状態に戻せるようにしました（設定（⚙）の「状態ファイル」）',
+      en: 'By request: save the whole state (every page\'s tasks, times and settings) to a file and load it on another device to pick up where you left off ("State file" in the settings (⚙))' }
+  ] },
   { version: '1.9.0', date: '2026-10-15', items: [
     { ja: 'ご要望を受けて、タスクの組をページに分けて持てるようにしました。下の ‹ › ボタン（iPad では左右スワイプ、トラックパッドでは2本指の左右スクロール）でページを切り替え、最後のページの ＋ でページを増やせます',
       en: 'By request: keep sets of tasks on separate pages. Switch with the ‹ › buttons at the bottom (swipe on iPad, or scroll sideways with two fingers on a trackpad); the + on the last page adds a page' },
@@ -126,6 +132,11 @@ var STRINGS = {
     autoStopWithTarget: '自動停止<br><small>目安あり</small>', autoStopNoTarget: '自動停止<br><small>目安なし</small>',
     autoStopWithTargetAria: '目安時間があるタスクの自動停止', autoStopNoTargetAria: '目安時間がないタスクの自動停止',
     autoStopOff: '自動停止しない', autoStopPlus: '目安 ＋ {d}',
+    preAlert: '予告', preAlertAria: '目安時間の少し前のお知らせ', preAlertOff: '予告しない',
+    preAlertMin: '{d}前', preAlertPct: '目安の {p}% 前',
+    stateFile: '状態ファイル', stateSave: '保存', stateLoad: '読み込む',
+    stateLoadConfirm: '「{file}」を読み込みますか？\n今の状態（全ページのタスク・時間・設定）は上書きされます。元に戻せません。',
+    stateLoadError: 'このファイルは読み込めませんでした。このアプリで保存した状態ファイルを選んでください。',
     measured: '計測時間', resetAll: 'すべて 00:00:00 に戻す',
     resetAllConfirm: 'このページのすべてのタスクの計測時間を 00:00:00 に戻しますか？\n（タスク名と目安時間は残ります）',
     pageDefault: 'ページ{n}', pagePrev: '前のページ', pageNext: '次のページ', pageAdd: 'ページを追加',
@@ -153,6 +164,11 @@ var STRINGS = {
       '上の合計・タスク数・「すべて 00:00:00 に戻す」は今のページだけに効きます。</p>' +
       '<p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。' +
       '音は最初に画面をどこか一度タップしてから有効になります。</p>' +
+      '<p>目安時間の少し前にも、短い音で<strong>予告</strong>します（初期設定は5分前）。' +
+      '何分前か、または目安の何％前かは設定（⚙）の「予告」で変えられます。予告が目安時間より長いときは鳴りません。</p>' +
+      '<p>別の端末に移るときは、設定（⚙）の「状態ファイル」で <span class="kbd-like">保存</span> し、' +
+      'そのファイルを移した端末で <span class="kbd-like">読み込む</span> と、全ページのタスク・時間・設定が同じ状態に戻ります。' +
+      '計測中のタスクは、保存した時点の時間で止まった状態で読み込まれます。</p>' +
       '<p>目安時間は、パソコンでは数値入力、iPad / スマートフォンでは指でスクロールして選びます。</p>' +
       '<p>止め忘れの保険として、走り続けたタスクは<strong>自動停止</strong>します。' +
       '初期設定では、目安時間があるタスクは「目安 ＋ 2時間」、ないタスクは「5時間」で止まり、' +
@@ -184,6 +200,11 @@ var STRINGS = {
     autoStopWithTarget: 'Auto-stop<br><small>with target</small>', autoStopNoTarget: 'Auto-stop<br><small>no target</small>',
     autoStopWithTargetAria: 'Auto-stop for tasks with a target', autoStopNoTargetAria: 'Auto-stop for tasks without a target',
     autoStopOff: 'Never', autoStopPlus: 'Target + {d}',
+    preAlert: 'Heads-up', preAlertAria: 'Warning shortly before a target', preAlertOff: 'Off',
+    preAlertMin: '{d} before', preAlertPct: '{p}% of the target before',
+    stateFile: 'State file', stateSave: 'Save', stateLoad: 'Load',
+    stateLoadConfirm: 'Load "{file}"?\nThe current state (every page\'s tasks, times and settings) will be replaced. This cannot be undone.',
+    stateLoadError: 'This file could not be loaded. Choose a state file saved by this app.',
     measured: 'Times', resetAll: 'Reset all to 00:00:00',
     resetAllConfirm: 'Reset every task on this page to 00:00:00?\n(Task names and targets are kept.)',
     pageDefault: 'Page {n}', pagePrev: 'Previous page', pageNext: 'Next page', pageAdd: 'Add a page',
@@ -210,6 +231,11 @@ var STRINGS = {
       'the total, the task count and "Reset all" apply to the current page only.</p>' +
       '<p>Past its target, a task\'s time turns <strong class="sample-over">bold red</strong> and an alert sounds. ' +
       'Sound works after the first tap anywhere on the page.</p>' +
+      '<p>A short <strong>heads-up</strong> sound also plays shortly before a target (5 minutes before by default). ' +
+      'Change how early — in minutes or as a share of the target — under "Heads-up" in the settings (⚙). It is skipped when it would come before the task even starts.</p>' +
+      '<p>To move to another device, press <span class="kbd-like">Save</span> under "State file" in the settings (⚙), ' +
+      'copy the file over and press <span class="kbd-like">Load</span> there: every page\'s tasks, times and settings come back as they were. ' +
+      'A task that was running is loaded stopped, at the time it had when you saved.</p>' +
       '<p>Targets are typed on a computer and picked with wheels on iPad and phones.</p>' +
       '<p>As a safety net, a task left running <strong>stops automatically</strong>: at target + 2 h, or after 5 h ' +
       'without a target, and the recorded time is cut there. Change or turn this off under "Auto-stop" in the settings (⚙).</p>' +
@@ -249,6 +275,16 @@ var DEFAULT_AUTO_STOP_NO_TARGET_MIN = 300;
 var AUTO_STOP_EXTRA_CHOICES = [30, 60, 120, 180, 240, 360, 480, 720, null];
 var AUTO_STOP_NO_TARGET_CHOICES = [60, 120, 180, 240, 300, 360, 480, 600, 720, 1440, null];
 
+/* Heads-up: a short sound shortly before a task reaches its target.
+ * 'm<N>' = N minutes before, 'p<N>' = N% of the target before, 'off' = none.
+ * A heads-up that would fall at or before the start (lead >= target) is skipped. */
+var DEFAULT_PRE_ALERT = 'm5';
+// TODO: [ASSUMPTION] the choices offered (minutes and percentages)
+var PRE_ALERT_CHOICES = ['off', 'm1', 'm3', 'm5', 'm10', 'm15', 'p10', 'p20', 'p25'];
+
+/* State file: everything needed to rebuild the state on another device. */
+var STATE_FILE_FORMAT = 1;
+
 /* ------------------------------------------------------------------ state */
 
 /* Pages: each page holds its own set of tasks (e.g. A-B-C in the morning, D-E
@@ -281,6 +317,7 @@ function makeTask(index, tasks) {
     accumulatedMs: 0,
     targetMin: null,   // null = no target time (the default)
     notified: false,   // beeped once for the current overrun
+    preNotified: false, // heads-up already given for the current target
     autoStopped: false // the last run was ended by auto-stop, not by the user
   };
 }
@@ -306,7 +343,8 @@ function defaultState() {
     pages: [first], page: 0, tasks: first.tasks,
     runningId: null, startedAt: null, soundId: DEFAULT_SOUND_ID,
     autoStopExtraMin: DEFAULT_AUTO_STOP_EXTRA_MIN,
-    autoStopNoTargetMin: DEFAULT_AUTO_STOP_NO_TARGET_MIN
+    autoStopNoTargetMin: DEFAULT_AUTO_STOP_NO_TARGET_MIN,
+    preAlert: DEFAULT_PRE_ALERT
   };
 }
 
@@ -374,6 +412,17 @@ function autoStopLimitMs(task) {
   return task.accumulatedMs + state.autoStopNoTargetMin * 60000;
 }
 
+/** How long (ms) before the target the heads-up sounds, or null for none:
+ *  no target, heads-up off, or a lead that would reach back to the start. */
+function preAlertLeadMs(task) {
+  if (task.targetMin === null || !state.preAlert || state.preAlert === 'off') return null;
+  var targetMs = task.targetMin * 60000;
+  var n = parseInt(state.preAlert.slice(1), 10);
+  if (!(n > 0)) return null;
+  var lead = state.preAlert.charAt(0) === 'p' ? targetMs * n / 100 : n * 60000;
+  return lead < targetMs ? lead : null;
+}
+
 /** Stop the running task if it has reached its limit, banking exactly the limit
  *  (not the wall-clock time since, which may include hours of sleep). */
 function checkAutoStop() {
@@ -425,6 +474,7 @@ function resetTask(task) {
   if (state.runningId === task.id) stopAll();
   task.accumulatedMs = 0;
   task.notified = false;
+  task.preNotified = false;
   task.autoStopped = false;
   save();
   render();
@@ -439,6 +489,7 @@ function resetAllTimes() {
   for (var i = 0; i < state.tasks.length; i++) {
     state.tasks[i].accumulatedMs = 0;
     state.tasks[i].notified = false;
+    state.tasks[i].preNotified = false;
     state.tasks[i].autoStopped = false;
   }
   save();
@@ -544,14 +595,19 @@ function movePage(from, to) {
 
 /* ------------------------------------------------------------------ storage */
 
+/** The state as stored (localStorage and the state file share this shape). */
+function storedState() {
+  return {
+    pages: state.pages, page: state.page, runningId: state.runningId, startedAt: state.startedAt,
+    soundId: state.soundId, autoStopExtraMin: state.autoStopExtraMin,
+    autoStopNoTargetMin: state.autoStopNoTargetMin, preAlert: state.preAlert
+  };
+}
+
 function save() {
   try {
     // `state.tasks` is only a view of the current page, so it is not stored twice.
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      pages: state.pages, page: state.page, runningId: state.runningId, startedAt: state.startedAt,
-      soundId: state.soundId, autoStopExtraMin: state.autoStopExtraMin,
-      autoStopNoTargetMin: state.autoStopNoTargetMin
-    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storedState()));
   } catch (e) {
     /* Private mode / quota: keep running in memory. */
   }
@@ -596,11 +652,17 @@ function load() {
   } catch (e) {
     return defaultState();
   }
-  if (!parsed) return defaultState();
+  return restoreState(parsed) || defaultState();
+}
+
+/** Build a state from stored data (localStorage or a state file), checking every
+ *  value. Returns null when there is nothing usable in it. */
+function restoreState(parsed) {
+  if (!parsed || typeof parsed !== 'object') return null;
   // Saved before v1.9.0: one set of tasks, which becomes page 1.
   var rawPages = Array.isArray(parsed.pages) && parsed.pages.length ? parsed.pages
     : (Array.isArray(parsed.tasks) && parsed.tasks.length ? [{ name: null, tasks: parsed.tasks }] : null);
-  if (!rawPages) return defaultState();
+  if (!rawPages) return null;
 
   var pages = [];
   var runningId = null;
@@ -621,7 +683,7 @@ function load() {
     if (!num || pages.some(function (other) { return other.num === num; })) num = freePageNum(pages);
     pages.push({ name: name.length ? name : null, num: num, tasks: tasks });
   }
-  if (pages.length === 0) return defaultState();
+  if (pages.length === 0) return null;
   var page = clampInt(parsed.page, 0, pages.length - 1, 0);
 
   var restored = {
@@ -634,7 +696,8 @@ function load() {
     autoStopExtraMin: loadChoice(parsed.autoStopExtraMin, AUTO_STOP_EXTRA_CHOICES,
                                  DEFAULT_AUTO_STOP_EXTRA_MIN),
     autoStopNoTargetMin: loadChoice(parsed.autoStopNoTargetMin, AUTO_STOP_NO_TARGET_CHOICES,
-                                    DEFAULT_AUTO_STOP_NO_TARGET_MIN)
+                                    DEFAULT_AUTO_STOP_NO_TARGET_MIN),
+    preAlert: loadChoice(parsed.preAlert, PRE_ALERT_CHOICES, DEFAULT_PRE_ALERT)
   };
 
   var startedAt = typeof parsed.startedAt === 'number' && isFinite(parsed.startedAt) ? parsed.startedAt : null;
@@ -664,6 +727,7 @@ function loadTasks(stored) {
       accumulatedMs: acc,
       targetMin: target,
       notified: saved.notified === true,
+      preNotified: saved.preNotified === true,
       autoStopped: saved.autoStopped === true,
       // saved before v1.7.0: colours followed the position, so keep that look
       color: clampInt(saved.color, 0, 5, i % 6)
@@ -1027,21 +1091,27 @@ function setSound(id) {
 /** On a user gesture, start and stop the clip so later plays are permitted. */
 function unlockAudio() {
   ensureBeepAudio();
+  ensurePreAudio();
   if (!beepAudio || audioUnlocked) return;
   try {
-    // Start and stop in the same turn. Waiting on the play() promise would
-    // pause only after playback had begun, and on a slow start that is past
-    // the clip's lead silence — which is audible as a beep on the first tap.
-    var promise = beepAudio.play();
-    beepAudio.pause();
-    try { beepAudio.currentTime = 0; } catch (e) { /* ignore */ }
+    unlockElement(beepAudio);
+    if (preAudio) unlockElement(preAudio);
     audioUnlocked = true;
-    // Pausing that quickly rejects the promise; that is the expected path.
-    if (promise && typeof promise['catch'] === 'function') {
-      promise['catch'](function () { /* ignore */ });
-    }
   } catch (e) {
     /* Refused: the next gesture retries. */
+  }
+}
+
+function unlockElement(audio) {
+  // Start and stop in the same turn. Waiting on the play() promise would
+  // pause only after playback had begun, and on a slow start that is past
+  // the clip's lead silence — which is audible as a beep on the first tap.
+  var promise = audio.play();
+  audio.pause();
+  try { audio.currentTime = 0; } catch (e) { /* ignore */ }
+  // Pausing that quickly rejects the promise; that is the expected path.
+  if (promise && typeof promise['catch'] === 'function') {
+    promise['catch'](function () { /* ignore */ });
   }
 }
 
@@ -1051,6 +1121,39 @@ function beep() {
   try {
     beepAudio.currentTime = 0;
     var promise = beepAudio.play();
+    if (promise && typeof promise['catch'] === 'function') {
+      promise['catch'](function () { /* ignore */ });
+    }
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/* The heads-up before a target: one short, high, quiet "pip", deliberately
+ * unlike every alert sound so the two cannot be confused. Its own element, so it
+ * is unlocked by the same first gesture and never swaps the alert clip's source. */
+var preAudio = null;
+
+function preAlertSamples(rate) {
+  return toneJoin([toneSilence(rate, LEAD_MS / 1000),
+                   toneStruck(rate, 1760, 0.25, 0.16, 14, [[1, 1]])]);
+}
+
+function ensurePreAudio() {
+  if (preAudio || !window.Audio || !window.btoa) return;
+  try {
+    preAudio = new window.Audio(wavDataUri(preAlertSamples(SAMPLE_RATE), SAMPLE_RATE));
+    preAudio.preload = 'auto';
+  } catch (e) {
+    preAudio = null;
+  }
+}
+
+function preBeep() {
+  if (!preAudio) return;
+  try {
+    preAudio.currentTime = 0;
+    var promise = preAudio.play();
     if (promise && typeof promise['catch'] === 'function') {
       promise['catch'](function () { /* ignore */ });
     }
@@ -1452,8 +1555,9 @@ function bindCard(card, task, index) {
 
   function onTargetInput() {
     task.targetMin = readTargetInputs(card);
-    // A new target re-arms the alert if we are not past it yet.
+    // A new target re-arms the alerts if we are not past them yet.
     task.notified = false;
+    task.preNotified = false;
     save();
     render();
   }
@@ -1475,6 +1579,7 @@ function bindCard(card, task, index) {
       card.wheelTimer = null;
       task.targetMin = readWheels(card);
       task.notified = false;
+      task.preNotified = false;
       save();
 
       // The glide is over, so the stack can be shifted and the row squared up
@@ -1579,13 +1684,28 @@ function render() {
   updateTitle(running);
 }
 
-/** Beep once when a task passes its target. Runs over EVERY page, so a task
- *  left running on another page still alerts. */
+/** Beep once when a task passes its target, and give the short heads-up once
+ *  shortly before it. Runs over EVERY page, so a task left running on another
+ *  page still alerts. */
 function checkOverruns() {
   var tasks = allTasks();
   for (var i = 0; i < tasks.length; i++) {
     var task = tasks[i];
-    var isOver = task.targetMin !== null && elapsedOf(task) >= task.targetMin * 60000;
+    var ms = elapsedOf(task);
+    var isOver = task.targetMin !== null && ms >= task.targetMin * 60000;
+
+    var lead = preAlertLeadMs(task);
+    var inHeadsUp = lead !== null && ms >= task.targetMin * 60000 - lead;
+    if (inHeadsUp && !task.preNotified) {
+      task.preNotified = true;
+      // Already past the target (e.g. noticed after sleep): the overrun alert speaks instead.
+      if (!isOver) preBeep();
+      save();
+    } else if (!inHeadsUp && task.preNotified) {
+      task.preNotified = false;
+      save();
+    }
+
     if (isOver && !task.notified) {
       task.notified = true;
       beep();
@@ -2114,6 +2234,92 @@ function clearSavedData() {
   window.location.reload();
 }
 
+/* ------------------------------------------------------------- state file */
+
+/** The state file's content. A running task is written stopped, with the time it
+ *  has now, so the copy does not keep counting while it is carried to the other
+ *  device. The state on this device is left as it is (still running). */
+function exportState() {
+  var data = JSON.parse(JSON.stringify(storedState()));
+  if (state.runningId !== null) {
+    var live = elapsedOf(findTask(state.runningId) || { accumulatedMs: 0 });
+    data.pages.forEach(function (page) {
+      page.tasks.forEach(function (task) { if (task.id === state.runningId) task.accumulatedMs = live; });
+    });
+  }
+  data.runningId = null;
+  data.startedAt = null;
+  return { app: APP_ID, format: STATE_FILE_FORMAT, version: APP_VERSION,
+           savedAt: Date.now(), lang: I18N.lang(), state: data };
+}
+
+/** Replace the whole state with a state file's content. Returns false (and
+ *  changes nothing) when the text is not a state file this app can read. */
+function importState(text) {
+  var parsed;
+  try { parsed = JSON.parse(text); } catch (e) { return false; }
+  if (!parsed || parsed.app !== APP_ID || !parsed.state) return false;
+  var restored = restoreState(parsed.state);
+  if (!restored) return false;
+  restored.runningId = null;   // files are written stopped; never resume a stale clock
+  restored.startedAt = null;
+  closeTaskMenu();
+  state = restored;
+  save();
+  syncSettingsControls();
+  if (STRINGS.hasOwnProperty(parsed.lang) && parsed.lang !== I18N.lang()) I18N.set(parsed.lang);
+  buildCards();
+  lastPageNav = lastPageList = '';
+  lastPageInputPage = -1;
+  render();
+  return true;
+}
+
+function stateFileName() {
+  var d = new Date(Date.now());
+  return APP_ID + '-' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) +
+         '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.json';
+}
+
+function saveStateFile() {
+  var blob = new window.Blob([JSON.stringify(exportState(), null, 2)], { type: 'application/json' });
+  var url = window.URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = stateFileName();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.setTimeout(function () { window.URL.revokeObjectURL(url); }, 1000);
+}
+
+function loadStateFile(file) {
+  if (!file) return;
+  var reader = new window.FileReader();
+  reader.onload = function () {
+    if (!window.confirm(t('stateLoadConfirm', { file: file.name }))) return;
+    if (!importState(String(reader.result))) window.alert(t('stateLoadError'));
+    else setSettingsOpen(false);
+  };
+  reader.onerror = function () { window.alert(t('stateLoadError')); };
+  reader.readAsText(file);
+}
+
+/** Put the settings sheet's controls back in step with `state` (after a load). */
+function syncSettingsControls() {
+  els.soundSelect.value = state.soundId;
+  els.autoStopExtra.value = state.autoStopExtraMin === null ? 'off' : String(state.autoStopExtraMin);
+  els.autoStopNoTarget.value = state.autoStopNoTargetMin === null ? 'off' : String(state.autoStopNoTargetMin);
+  els.preAlert.value = state.preAlert;
+}
+
+/** Labels for the heads-up select. */
+function preAlertLabel(choice) {
+  if (choice === 'off') return t('preAlertOff');
+  var n = parseInt(choice.slice(1), 10);
+  return choice.charAt(0) === 'p' ? t('preAlertPct', { p: n }) : t('preAlertMin', { d: formatTargetLabel(n) });
+}
+
 /** Text that is built in JS rather than marked up with data-i18n. */
 function applyLanguage() {
   els.langSelect.value = I18N.lang();
@@ -2123,6 +2329,7 @@ function applyLanguage() {
   }
   relabelSelect(els.autoStopExtra, AUTO_STOP_EXTRA_CHOICES, autoStopExtraLabel);
   relabelSelect(els.autoStopNoTarget, AUTO_STOP_NO_TARGET_CHOICES, autoStopNoTargetLabel);
+  relabelSelect(els.preAlert, PRE_ALERT_CHOICES, preAlertLabel);
   if (soundTestTimer === null) els.testSound.textContent = t('soundTest');
   syncFullscreenBtn();
   buildChangelog();
@@ -2315,6 +2522,10 @@ function init() {
   els.pageListAdd = document.getElementById('page-list-add');
   els.pageNameInput = document.getElementById('page-name-input');
   els.pageDelete = document.getElementById('page-delete');
+  els.preAlert = document.getElementById('pre-alert');
+  els.stateSave = document.getElementById('state-save');
+  els.stateLoad = document.getElementById('state-load');
+  els.stateFileInput = document.getElementById('state-file-input');
 
   // Before anything is built: default task names and labels use the language.
   I18N.init(LANG_KEY, STRINGS);
@@ -2380,6 +2591,25 @@ function init() {
                      'autoStopExtraMin');
   bindAutoStopSelect(els.autoStopNoTarget, AUTO_STOP_NO_TARGET_CHOICES, autoStopNoTargetLabel,
                      'autoStopNoTargetMin');
+  PRE_ALERT_CHOICES.forEach(function (choice) {
+    var option = document.createElement('option');
+    option.value = choice;
+    option.textContent = preAlertLabel(choice);
+    els.preAlert.appendChild(option);
+  });
+  els.preAlert.value = state.preAlert;
+  els.preAlert.addEventListener('change', function () {
+    state.preAlert = PRE_ALERT_CHOICES.indexOf(els.preAlert.value) >= 0 ? els.preAlert.value : DEFAULT_PRE_ALERT;
+    save();
+    render();
+  });
+
+  els.stateSave.addEventListener('click', saveStateFile);
+  els.stateLoad.addEventListener('click', function () { els.stateFileInput.click(); });
+  els.stateFileInput.addEventListener('change', function () {
+    loadStateFile(els.stateFileInput.files && els.stateFileInput.files[0]);
+    els.stateFileInput.value = '';   // choosing the same file again still fires `change`
+  });
   els.backdrop.addEventListener('click', closeOverlays);
 
   els.resetAll.addEventListener('click', function () {

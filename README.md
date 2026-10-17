@@ -14,11 +14,12 @@ It runs entirely in the browser. Nothing to install, no server communication.
 ## Features
 
 - One stopwatch per task (1 to 6 tasks); **exactly one runs at a time**, switching is one tap
-- Optional target time per task, with a red display and a sound when exceeded
+- Optional target time per task, with a red display and a sound when exceeded, and a short heads-up sound shortly before it
 - Auto-stop as a safety net for forgetting to stop
 - Total time of all tasks, Japanese / English, works on PC and iPad
 - Reorder tasks: press and hold a card, then drag it (the other cards make room as you move)
 - Pages: keep a set of tasks per page (e.g. A, B, C in the morning and D, E in the afternoon); the page list shows every page's times
+- State file: save everything to a file and load it on another device to continue there
 - **FB** button in the header: send feedback or a bug report to the developer
 
 ---
@@ -67,11 +68,13 @@ The **⚙** at the right of the header opens the app-wide settings.
 - **Page name** / **Delete this page** … rename the current page (leave it blank for "Page n"). Deleting always asks first.
 - **Tasks** … `−` / `＋` sets **1 to 6** tasks on the current page (3 by default). Removing a task that has recorded time asks for confirmation.
 - **Alert sound** … the overrun sound and a "Test sound" button.
+- **Heads-up** … how long before a target the short warning sound plays: 1–15 minutes, 10–25% of the target, or off (default: 5 minutes). It is skipped when it would come before the task even starts (e.g. 5 minutes before a 3-minute target).
 - **Auto-stop** … a safety net for forgetting to stop. It stops a task that keeps running (see below).
 - **Reset all times to 00:00:00** … resets the time of every task on the current page (task names and target times are kept).
 - **Share** … QR codes for the app and its source.
 - **Changelog** … shows the changes per version, newest first. The first time you open a new version, ⚙ gets a red dot, which disappears once you open the changelog. Tapping the version next to the app name opens it too.
 - **Other apps** … opens the list of apps.
+- **State file** … **Save** writes every page's tasks, times and settings to a file; **Load** on another device (after a confirmation) replaces its state with that file. A task that was running is saved stopped, at the time it had then, so the time spent moving the file is not counted.
 - **Clear saved data** … erases everything this app saved in the browser and starts over.
 
 ### Auto-stop (a safety net for forgetting to stop)
@@ -101,6 +104,8 @@ When the elapsed time passes the target:
 - the elapsed time turns **red and bold** (**it keeps counting up**)
 - **a sound (three beeps) alerts you** (once per overrun)
 - the overrun is shown, like `Over +00:05:12`
+
+Shortly before the target (5 minutes by default; see **Heads-up** in ⚙), a single short, high "pip" plays as a warning. It sounds different from the overrun alert so the two cannot be confused.
 
 Pressing **"Test sound"** in ⚙ plays the beep a few seconds later. If you hear it, overrun alerts will sound too.
 (It plays a few seconds later, not right when you press, to reproduce the same "playback without a user action" as an overrun alert.)

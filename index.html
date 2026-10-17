@@ -125,6 +125,11 @@
   </div>
 
   <div class="sheet-row">
+    <span class="sheet-label" data-i18n="preAlert">予告</span>
+    <select id="pre-alert" class="sound-select" data-i18n-aria-label="preAlertAria" aria-label="目安時間の少し前のお知らせ"></select>
+  </div>
+
+  <div class="sheet-row">
     <span class="sheet-label" data-i18n-html="autoStopWithTarget">自動停止<br><small>目安あり</small></span>
     <select id="auto-stop-extra" class="sound-select" data-i18n-aria-label="autoStopWithTargetAria" aria-label="目安時間があるタスクの自動停止"></select>
   </div>
@@ -153,6 +158,15 @@
     <span class="sheet-label" data-i18n="c.otherApps">他のアプリ</span>
     <a id="otherAppsLink" class="btn" href="https://yukmmz.github.io/" target="_blank" rel="noopener"
        data-i18n="c.openPortal">アプリ一覧を開く</a>
+  </div>
+
+  <div class="sheet-row">
+    <span class="sheet-label" data-i18n="stateFile">状態ファイル</span>
+    <span class="sheet-buttons">
+      <button id="state-save" class="btn" type="button" data-i18n="stateSave">保存</button>
+      <button id="state-load" class="btn" type="button" data-i18n="stateLoad">読み込む</button>
+    </span>
+    <input id="state-file-input" type="file" accept=".json,application/json" hidden>
   </div>
 
   <div class="sheet-row">

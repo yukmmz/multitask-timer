@@ -33,8 +33,8 @@ var APP_ID = 'multitask-timer';
  * users, in both languages. */
 var CHANGELOG = [
   { version: '1.10.0', date: '2026-10-17', items: [
-    { ja: 'ご要望を受けて、目安時間の少し前にも短い音でお知らせするようにしました。何分前か（または目安の何％前か）は設定（⚙）の「予告」で変えられます（初期設定は5分前）',
-      en: 'By request: a short sound now warns you shortly before a target. Choose how early (minutes, or a share of the target) under "Heads-up" in the settings (⚙); the default is 5 minutes' },
+    { ja: 'ご要望を受けて、目安時間の少し前にも、通知音を少し速くした音でお知らせするようにしました。何分前か（または目安の何％前か）は設定（⚙）の「予告」で変えられます（初期設定は5分前）',
+      en: 'By request: the alert sound, played a little faster, now warns you shortly before a target. Choose how early (minutes, or a share of the target) under "Heads-up" in the settings (⚙); the default is 5 minutes' },
     { ja: 'ご要望を受けて、今の状態（全ページのタスク・時間・設定）をファイルに保存し、別の端末で読み込んで同じ状態に戻せるようにしました（設定（⚙）の「状態ファイル」）',
       en: 'By request: save the whole state (every page\'s tasks, times and settings) to a file and load it on another device to pick up where you left off ("State file" in the settings (⚙))' }
   ] },
@@ -164,7 +164,7 @@ var STRINGS = {
       '上の合計・タスク数・「すべて 00:00:00 に戻す」は今のページだけに効きます。</p>' +
       '<p>目安時間を超えると、経過時間が<strong class="sample-over">赤い太字</strong>になり、音でお知らせします。' +
       '音は最初に画面をどこか一度タップしてから有効になります。</p>' +
-      '<p>目安時間の少し前にも、短い音で<strong>予告</strong>します（初期設定は5分前）。' +
+      '<p>目安時間の少し前にも、通知音を少し速くした音で<strong>予告</strong>します（初期設定は5分前）。' +
       '何分前か、または目安の何％前かは設定（⚙）の「予告」で変えられます。予告が目安時間より長いときは鳴りません。</p>' +
       '<p>別の端末に移るときは、設定（⚙）の「状態ファイル」で <span class="kbd-like">保存</span> し、' +
       'そのファイルを移した端末で <span class="kbd-like">読み込む</span> と、全ページのタスク・時間・設定が同じ状態に戻ります。' +
@@ -231,7 +231,7 @@ var STRINGS = {
       'the total, the task count and "Reset all" apply to the current page only.</p>' +
       '<p>Past its target, a task\'s time turns <strong class="sample-over">bold red</strong> and an alert sounds. ' +
       'Sound works after the first tap anywhere on the page.</p>' +
-      '<p>A short <strong>heads-up</strong> sound also plays shortly before a target (5 minutes before by default). ' +
+      '<p>A <strong>heads-up</strong> — the alert sound, a little faster — also plays shortly before a target (5 minutes before by default). ' +
       'Change how early — in minutes or as a share of the target — under "Heads-up" in the settings (⚙). It is skipped when it would come before the task even starts.</p>' +
       '<p>To move to another device, press <span class="kbd-like">Save</span> under "State file" in the settings (⚙), ' +
       'copy the file over and press <span class="kbd-like">Load</span> there: every page\'s tasks, times and settings come back as they were. ' +
@@ -275,7 +275,7 @@ var DEFAULT_AUTO_STOP_NO_TARGET_MIN = 300;
 var AUTO_STOP_EXTRA_CHOICES = [30, 60, 120, 180, 240, 360, 480, 720, null];
 var AUTO_STOP_NO_TARGET_CHOICES = [60, 120, 180, 240, 300, 360, 480, 600, 720, 1440, null];
 
-/* Heads-up: a short sound shortly before a task reaches its target.
+/* Heads-up: the alert sound, a little faster, shortly before a task reaches its target.
  * 'm<N>' = N minutes before, 'p<N>' = N% of the target before, 'off' = none.
  * A heads-up that would fall at or before the start (lead >= target) is skipped. */
 var DEFAULT_PRE_ALERT = 'm5';
@@ -1084,6 +1084,7 @@ function setSound(id) {
   state.soundId = findSound(id).id;
   save();
   ensureBeepAudio();
+  ensurePreAudio();         // the heads-up is the same sound, faster
   audioUnlocked = true;     // we are inside the change gesture
   beep();
 }
@@ -1129,23 +1130,36 @@ function beep() {
   }
 }
 
-/* The heads-up before a target: one short, high, quiet "pip", deliberately
- * unlike every alert sound so the two cannot be confused. Its own element, so it
- * is unlocked by the same first gesture and never swaps the alert clip's source. */
+/* The heads-up before a target: the chosen alert sound, played a little faster
+ * (and so a little higher), like a tape run fast — recognisably the same sound,
+ * yet clearly not the overrun itself. Built by synthesising at a lower rate and
+ * labelling the WAV with the normal one. Its own element, so it is unlocked by
+ * the same first gesture and never swaps the alert clip's source. */
+// TODO: [ASSUMPTION] "a little faster" = 1.25x
+var PRE_ALERT_SPEED = 1.25;
 var preAudio = null;
+var builtPreSoundId = null;
 
 function preAlertSamples(rate) {
-  return toneJoin([toneSilence(rate, LEAD_MS / 1000),
-                   toneStruck(rate, 1760, 0.25, 0.16, 14, [[1, 1]])]);
+  return beepSamples(Math.round(rate / PRE_ALERT_SPEED));
 }
 
+/** Build (or rebuild after the alert sound changed) the heads-up clip. */
 function ensurePreAudio() {
-  if (preAudio || !window.Audio || !window.btoa) return;
+  if (!window.Audio || !window.btoa) return;
+  var wanted = state ? state.soundId : DEFAULT_SOUND_ID;
+  if (preAudio && builtPreSoundId === wanted) return;
   try {
-    preAudio = new window.Audio(wavDataUri(preAlertSamples(SAMPLE_RATE), SAMPLE_RATE));
-    preAudio.preload = 'auto';
+    var uri = wavDataUri(preAlertSamples(SAMPLE_RATE), SAMPLE_RATE);
+    if (preAudio) preAudio.src = uri;      // keep the element: it stays unlocked
+    else {
+      preAudio = new window.Audio(uri);
+      preAudio.preload = 'auto';
+    }
+    builtPreSoundId = wanted;
   } catch (e) {
     preAudio = null;
+    builtPreSoundId = null;
   }
 }
 
@@ -1684,7 +1698,7 @@ function render() {
   updateTitle(running);
 }
 
-/** Beep once when a task passes its target, and give the short heads-up once
+/** Beep once when a task passes its target, and give the heads-up once
  *  shortly before it. Runs over EVERY page, so a task left running on another
  *  page still alerts. */
 function checkOverruns() {

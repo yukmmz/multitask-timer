@@ -578,7 +578,7 @@ ctxI.__els['lang-select'].handlers.change[0]();
 check('switched to English', ctxI.I18N.lang() === 'en');
 check('en duration', ctxI.formatTargetLabel(90) === '1 h 30 min', ctxI.formatTargetLabel(90));
 check('<html lang> follows', ctxI.__doc.documentElement.lang === 'en', ctxI.__doc.documentElement.lang);
-check('changelog rebuilt in English', /short sound now warns you shortly before a target/.test(
+check('changelog rebuilt in English', /now warns you shortly before a target/.test(
   ctxI.__els.changelogList.children[0].children[1].children[0].textContent));
 check('sound names in English', ctxI.__els['sound-select'].children[0].textContent === 'Chime (3 notes)',
   ctxI.__els['sound-select'].children[0].textContent);
@@ -814,6 +814,16 @@ const ctxHP = makeContext(storeHP);
 ctxHP.state.preAlert = 'p10';
 ctxHP.save();
 check('heads-up setting survives a reload', makeContext(storeHP).state.preAlert === 'p10');
+// The heads-up is the chosen alert sound played faster: same samples, fewer of them.
+const alertLen = ctxHP.beepSamples(ctxHP.SAMPLE_RATE).length;
+const preLen = ctxHP.preAlertSamples(ctxHP.SAMPLE_RATE).length;
+check('heads-up is the alert sound, faster', Math.abs(preLen * ctxHP.PRE_ALERT_SPEED - alertLen) < alertLen * 0.01,
+  preLen + ' vs ' + alertLen);
+audios = [];
+ctxHP.unlockAudio();
+const preSrcBefore = audios[1].src;
+ctxHP.setSound('bell');
+check('changing the alert sound rebuilds the heads-up', audios[1].src !== preSrcBefore && audios.length === 2);
 
 console.log('\n[27] state file');
 const ctxS = makeContext({});

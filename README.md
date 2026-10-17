@@ -14,7 +14,7 @@ It runs entirely in the browser. Nothing to install, no server communication.
 ## Features
 
 - One stopwatch per task (1 to 6 tasks); **exactly one runs at a time**, switching is one tap
-- Optional target time per task, with a red display and a sound when exceeded, and a short heads-up sound shortly before it
+- Optional target time per task, with a red display and a sound when exceeded, and a heads-up (the same sound, a little faster) shortly before it
 - Auto-stop as a safety net for forgetting to stop
 - Total time of all tasks, Japanese / English, works on PC and iPad
 - Reorder tasks: press and hold a card, then drag it (the other cards make room as you move)
@@ -68,7 +68,7 @@ The **⚙** at the right of the header opens the app-wide settings.
 - **Page name** / **Delete this page** … rename the current page (leave it blank for "Page n"). Deleting always asks first.
 - **Tasks** … `−` / `＋` sets **1 to 6** tasks on the current page (3 by default). Removing a task that has recorded time asks for confirmation.
 - **Alert sound** … the overrun sound and a "Test sound" button.
-- **Heads-up** … how long before a target the short warning sound plays: 1–15 minutes, 10–25% of the target, or off (default: 5 minutes). It is skipped when it would come before the task even starts (e.g. 5 minutes before a 3-minute target).
+- **Heads-up** … how long before a target the heads-up (the alert sound played a little faster) sounds: 1–15 minutes, 10–25% of the target, or off (default: 5 minutes). It is skipped when it would come before the task even starts (e.g. 5 minutes before a 3-minute target).
 - **Auto-stop** … a safety net for forgetting to stop. It stops a task that keeps running (see below).
 - **Reset all times to 00:00:00** … resets the time of every task on the current page (task names and target times are kept).
 - **Share** … QR codes for the app and its source.
@@ -105,7 +105,7 @@ When the elapsed time passes the target:
 - **a sound (three beeps) alerts you** (once per overrun)
 - the overrun is shown, like `Over +00:05:12`
 
-Shortly before the target (5 minutes by default; see **Heads-up** in ⚙), a single short, high "pip" plays as a warning. It sounds different from the overrun alert so the two cannot be confused.
+Shortly before the target (5 minutes by default; see **Heads-up** in ⚙), the alert sound plays once, a little faster (and so a little higher) than usual, as a warning. It changes with the alert sound you choose.
 
 Pressing **"Test sound"** in ⚙ plays the beep a few seconds later. If you hear it, overrun alerts will sound too.
 (It plays a few seconds later, not right when you press, to reproduce the same "playback without a user action" as an overrun alert.)
